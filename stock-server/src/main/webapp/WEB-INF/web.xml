@@ -8,6 +8,14 @@
     <servlet>
         <servlet-name>Jersey Web Application</servlet-name>
         <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>
+                com.sun.jersey.config.property.packages
+            </param-name>
+            <param-value>
+                de.mg.stock.server
+            </param-value>
+        </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet-mapping>
@@ -15,31 +23,26 @@
         <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
 
-    <!--security-constraint>
-        <web-resource-collection>
-            <web-resource-name>TT</web-resource-name>
-            <url-pattern>/</url-pattern>
-        </web-resource-collection>
-        <auth-constraint>
-            <role-name>TT</role-name>
-        </auth-constraint>
-    </security-constraint>
-
     <security-constraint>
         <web-resource-collection>
-            <web-resource-name>Rest</web-resource-name>
+            <web-resource-name>stock</web-resource-name>
             <url-pattern>/rest/*</url-pattern>
-            <http-method>GET</http-method>
-            <http-method>POST</http-method>
         </web-resource-collection>
+        <auth-constraint>
+            <role-name>stock</role-name>
+        </auth-constraint>
+        <user-data-constraint>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
     </security-constraint>
+
+    <security-role>
+        <role-name>stock</role-name>
+    </security-role>
 
     <login-config>
         <auth-method>BASIC</auth-method>
         <realm-name>file</realm-name>
     </login-config>
 
-    <security-role>
-        <role-name>TT</role-name>
-    </security-role-->
 </web-app>

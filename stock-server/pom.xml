@@ -16,6 +16,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>de.mg.stock</groupId>
+            <artifactId>stock-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>javax</groupId>
             <artifactId>javaee-api</artifactId>
             <version>7.0</version>

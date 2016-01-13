@@ -1,25 +1,34 @@
 package de.mg.stock.server.model;
 
-import javax.persistence.Entity;
-import java.time.LocalTime;
+import javax.persistence.*;
+import java.time.LocalDateTime;
+import java.util.Date;
+
+import static de.mg.stock.server.util.DateConverters.toDate;
+import static de.mg.stock.server.util.DateConverters.toLocalDateTime;
 
 @Entity
-public class InstantPrice {
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"stock_id", "time"}))
+public class InstantPrice extends AbstractPrice {
 
-    private Stock stock;
-    private LocalTime time;
+    @Column(nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date time;
+
     private Long ask;
     private Long bid;
     private Long dayMin;
     private Long dayMax;
 
-    public InstantPrice(Stock stock, LocalTime time) {
-        this.stock = stock;
-        this.time = time;
+    public InstantPrice() {
     }
 
-    public LocalTime getTime() {
-        return time;
+    public LocalDateTime getTime() {
+        return toLocalDateTime(time);
+    }
+
+    public void setTime(LocalDateTime time) {
+        this.time = toDate(time);
     }
 
     public Long getAsk() {
@@ -52,5 +61,14 @@ public class InstantPrice {
 
     public void setDayMax(Long dayMax) {
         this.dayMax = dayMax;
+    }
+
+
+    public boolean hasSamePrices(InstantPrice that) {
+
+        if (ask != null ? !ask.equals(that.ask) : that.ask != null) return false;
+        if (bid != null ? !bid.equals(that.bid) : that.bid != null) return false;
+        if (dayMin != null ? !dayMin.equals(that.dayMin) : that.dayMin != null) return false;
+        return dayMax != null ? dayMax.equals(that.dayMax) : that.dayMax == null;
     }
 }

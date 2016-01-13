@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.text.*?>
+
+<VBox prefHeight="700.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/null" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.mg.stock.charts.ChartsController">
+  <children>
+      <HBox prefHeight="100.0" prefWidth="200.0">
+         <children>
+          <MenuBar>
+            <menus>
+              <Menu mnemonicParsing="false" text="File">
+                <items>
+                  <MenuItem mnemonicParsing="false" onAction="#exportData" text="Export" />
+                        <MenuItem mnemonicParsing="false" onAction="#importData" text="Import" />
+                        <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit" />
+                </items>
+              </Menu>
+              <Menu mnemonicParsing="false" text="Chart">
+                <items>
+                        <RadioMenuItem mnemonicParsing="false" onAction="#showWorld" text="World">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="chart" />
+                           </toggleGroup>
+                        </RadioMenuItem>
+                        <RadioMenuItem mnemonicParsing="false" onAction="#showEmerging" text="Emerging Markets" toggleGroup="$chart" />
+                        <RadioMenuItem mnemonicParsing="false" onAction="#showSmall200" text="European Small 200" toggleGroup="$chart" />
+                        <RadioMenuItem mnemonicParsing="false" onAction="#showAll" text="All" toggleGroup="$chart" />
+                        <RadioMenuItem mnemonicParsing="false" onAction="#showAggregated" text="Aggregated" toggleGroup="$chart" />
+                        <SeparatorMenuItem mnemonicParsing="false" />
+                        <RadioMenuItem mnemonicParsing="false" onAction="#showAbsolute" selected="true" text="Absolute">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="percentageSelection" />
+                           </toggleGroup>
+                        </RadioMenuItem>
+                        <RadioMenuItem mnemonicParsing="false" onAction="#showPercentage" text="Percentage" toggleGroup="$percentageSelection" />
+                </items>
+              </Menu>
+            </menus>
+               <padding>
+                  <Insets left="20.0" right="100.0" />
+               </padding>
+               <HBox.margin>
+                  <Insets />
+               </HBox.margin>
+          </MenuBar>
+            <DatePicker fx:id="sinceDate">
+               <HBox.margin>
+                  <Insets />
+               </HBox.margin>
+            </DatePicker>
+            <Label prefHeight="38.0" prefWidth="40.0" text="points">
+               <HBox.margin>
+                  <Insets left="30.0" />
+               </HBox.margin>
+            </Label>
+            <TextField fx:id="points" prefHeight="26.0" prefWidth="57.0" text="100">
+               <HBox.margin>
+                  <Insets left="5.0" />
+               </HBox.margin>
+            </TextField>
+            <Button mnemonicParsing="false" onAction="#update" text="Update">
+               <HBox.margin>
+                  <Insets left="30.0" />
+               </HBox.margin>
+            </Button>
+         </children>
+      </HBox>
+  <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0">
+         <content>
+            <VBox fx:id="chartsContainer" prefHeight="1600.0" prefWidth="1800.0" />
+         </content>
+  </ScrollPane>
+    <HBox id="HBox" alignment="CENTER_LEFT" spacing="5.0" VBox.vgrow="NEVER">
+      <children>
+        <Label fx:id="statusLeft" maxHeight="1.7976931348623157E308" maxWidth="-1.0" HBox.hgrow="ALWAYS">
+          <font>
+            <Font size="12.0" fx:id="x3" />
+          </font>
+        </Label>
+        <Pane prefHeight="-1.0" prefWidth="-1.0" HBox.hgrow="ALWAYS" />
+        <Label fx:id="statusRight" font="$x3" maxWidth="-1.0" HBox.hgrow="NEVER" />
+      </children>
+      <padding>
+        <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+      </padding>
+    </HBox>
+  </children>
+</VBox>

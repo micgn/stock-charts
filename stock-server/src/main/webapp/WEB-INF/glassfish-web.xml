@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glassfish-web-app>
+    <security-role-mapping>
+        <role-name>stock</role-name>
+        <principal-name>stock</principal-name>
+        <group-name>stock</group-name>
+    </security-role-mapping>
+</glassfish-web-app>
