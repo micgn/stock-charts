@@ -1,22 +1,32 @@
+/*
+ * Copyright 2016 Michael Gnatz.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package de.mg.stock.charts;
 
 import de.mg.stock.dto.ChartDataDTO;
 import de.mg.stock.dto.StocksEnum;
-import javafx.geometry.Side;
-import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.Map;
 
 import static de.mg.stock.dto.StocksEnum.EMERGING;
 import static de.mg.stock.dto.StocksEnum.SMALL200;
@@ -27,7 +37,7 @@ class ChartsUpdater {
     public static final ChartsUpdater INSTANCE = new ChartsUpdater();
 
     private VBox chartsContainer;
-    private Label statusLeft, statusRight;
+    private Label statusLeft;
 
     private ShowTypeEnum showType = null;
     private boolean showPercentages = false;
@@ -40,10 +50,9 @@ class ChartsUpdater {
     private ChartsUpdater() {
     }
 
-    void initialize(VBox chartsContainer, Label statusLeft, Label statusRight) {
+    void initialize(VBox chartsContainer, Label statusLeft) {
         this.chartsContainer = chartsContainer;
         this.statusLeft = statusLeft;
-        this.statusRight = statusRight;
     }
 
     void reinitializeCharts() {
@@ -111,7 +120,6 @@ class ChartsUpdater {
         long secAgo = lastChartUpdate.until(LocalDateTime.now(), ChronoUnit.SECONDS);
         String lastUpdateStr = (lastChartData != null) ? lastChartData.format(DateTimeFormatter.ofPattern("dd.MM. hh:mm")) : "n/a";
         statusLeft.setText(String.format("loaded %ds ago, last data from %s", secAgo, lastUpdateStr));
-        //statusRight.setText("");
     }
 
     private ChartDataDTO load(StocksEnum stock) {

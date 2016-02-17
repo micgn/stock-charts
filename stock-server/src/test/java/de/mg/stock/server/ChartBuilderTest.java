@@ -1,6 +1,7 @@
 package de.mg.stock.server;
 
 import de.mg.stock.dto.ChartDataDTO;
+import de.mg.stock.server.logic.ChartBuilder;
 import de.mg.stock.server.model.DayPrice;
 import de.mg.stock.server.model.Stock;
 import org.junit.Test;
@@ -14,18 +15,18 @@ public class ChartBuilderTest {
 
     ChartBuilder builder = new ChartBuilder();
 
-    //@Test
+    @Test
     public void test() {
 
         Stock stock = new Stock();
         stock.getDayPrices().add(new DayPrice(LocalDate.of(2016, 1, 5), 3L, 3L));
         stock.getDayPrices().add(new DayPrice(LocalDate.of(2016, 1, 1), 1L, 5L));
         stock.getDayPrices().add(new DayPrice(LocalDate.of(2016, 1, 3), 2L, 3L));
-        ChartDataDTO dto = builder.createAggregated(stock, 2, null, false);
+        ChartDataDTO dto = builder.createAggregated(stock, 2, Optional.empty(), false);
         System.out.println(dto);
     }
 
-    //@Test
+    @Test
     public void test2() {
 
         Stock s1 = new Stock();

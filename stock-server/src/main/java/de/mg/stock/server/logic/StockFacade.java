@@ -1,6 +1,24 @@
-package de.mg.stock.server;
+/*
+ * Copyright 2016 Michael Gnatz.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package de.mg.stock.server.logic;
 
 import de.mg.stock.dto.ChartDataDTO;
+import de.mg.stock.dto.StocksEnum;
+import de.mg.stock.server.dao.StockDAO;
 import de.mg.stock.server.model.Stock;
 
 import javax.ejb.Stateless;
@@ -8,8 +26,12 @@ import javax.ejb.TransactionAttribute;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -20,7 +42,6 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 import static javax.ejb.TransactionAttributeType.REQUIRED;
-import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
@@ -76,14 +97,15 @@ public class StockFacade {
     public Response getAggregatedChartData(@PathParam("date") String dateStr,
                                            @PathParam("points") String pointsStr) {
 
-        List<Stock> stocks = stockDAO.findAllStocks();
+        List<Stock> stocks = new ArrayList<>();
+        stocks.add(stockDAO.findStock(StocksEnum.WORLD.getSymbol()));
+        stocks.add(stockDAO.findStock(StocksEnum.EMERGING.getSymbol()));
+        stocks.add(stockDAO.findStock(StocksEnum.SMALL200.getSymbol()));
 
-        // TODO remove hard coded
-        stocks.sort((s1, s2) -> s1.getSymbol().compareTo(s2.getSymbol()));
         List<Integer> weights = new ArrayList<>();
-        weights.add(20);
-        weights.add(10);
-        weights.add(80);
+        weights.add(StocksEnum.WORLD.getWeight());
+        weights.add(StocksEnum.EMERGING.getWeight());
+        weights.add(StocksEnum.SMALL200.getWeight());
 
         ChartDataDTO data = chartBuilder.createAggregated(stocks, weights, Integer.valueOf(pointsStr), toDate(dateStr));
 
