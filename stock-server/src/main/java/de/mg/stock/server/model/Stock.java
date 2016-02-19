@@ -27,14 +27,10 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 @NamedQueries({
         @NamedQuery(name = "findStockBySymbol",
@@ -42,7 +38,9 @@ import java.util.stream.Collectors;
         @NamedQuery(name = "findAllStocks",
                 query = "select s from Stock s"),
         @NamedQuery(name = "minDate",
-                query = "select min(dp.day) from DayPrice dp")
+                query = "select min(dp.day) from DayPrice dp"),
+        @NamedQuery(name = "deleteOldInstantPrices",
+                query = "delete from InstantPrice ip where ip.time < :keepSinceDate")
 })
 @Entity
 @XmlRootElement
@@ -122,13 +120,6 @@ public class Stock extends AbstractEntity {
     }
 
     public void updateInstantPrice(InstantPrice price) {
-
-        // cleanup
-        Set<InstantPrice> toRemove = instantPrices.stream()
-                .filter(p -> p.getTime().isBefore(LocalDate.now().minus(5, ChronoUnit.DAYS).atStartOfDay()))
-                .collect(Collectors.toSet());
-        instantPrices.removeAll(toRemove);
-        toRemove.stream().forEach(p -> p.setStock(null));
 
         if (instantPrices.isEmpty()) {
             instantPrices.add(price);

@@ -22,10 +22,18 @@ import javax.inject.Singleton;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.TemporalType;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.logging.Logger;
+
+import static de.mg.stock.server.util.DateConverters.toDate;
 
 @Singleton
 public class StockDAO {
+
+    private static Logger logger = Logger.getLogger(StockDAO.class.getName());
 
     @PersistenceContext
     private EntityManager em;
@@ -39,7 +47,26 @@ public class StockDAO {
         }
     }
 
+    public Stock findOrCreateStock(String symbol) {
+        Stock stock = findStock(symbol);
+        if (stock == null) {
+            stock = new Stock(symbol);
+            stock = em.merge(stock);
+        }
+        return stock;
+    }
+
     public List<Stock> findAllStocks() {
         return em.createNamedQuery("findAllStocks").getResultList();
+    }
+
+    public void deleteOldInstantData() {
+
+        LocalDateTime keepSinceDate = LocalDateTime.now().minus(3, ChronoUnit.DAYS);
+        int deleted = em.createNamedQuery("deleteOldInstantPrices").
+                setParameter("keepSinceDate", toDate(keepSinceDate), TemporalType.TIMESTAMP).
+                executeUpdate();
+
+        logger.info("deleted " + deleted + " old instant prices");
     }
 }

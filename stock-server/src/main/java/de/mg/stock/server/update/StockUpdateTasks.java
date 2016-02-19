@@ -27,8 +27,6 @@ import javax.ejb.Schedule;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -52,13 +50,10 @@ public class StockUpdateTasks {
     @Inject
     private StockUpdateFromYahooInstant yahooInstant;
 
-    @PersistenceContext
-    private EntityManager em;
-
     @Inject
     private StockDAO stockDAO;
 
-    @Schedule(hour = "5, 22")
+    @Schedule(hour = "5, 22", persistent = false)
     public void updateHistoricalData() {
         // commented update tasks do not work
         //updateHistoricalData(WORLD, google);
@@ -70,16 +65,22 @@ public class StockUpdateTasks {
         updateHistoricalData(SMALL200, yahoo);
     }
 
-    @Schedule(hour = "7-23", minute = "5, 15, 25, 35, 45, 55")
+    @Schedule(hour = "7-23", minute = "5, 15, 25, 35, 45, 55", persistent = false)
     public void updateInstantData() {
         updateInstantData(WORLD);
         updateInstantData(SMALL200);
         updateInstantData(EMERGING);
     }
 
+    @Schedule(hour = "4", persistent = false)
+    public void cleanup() {
+        stockDAO.deleteOldInstantData();
+    }
+
 
     @Asynchronous
     public void updateAsync() {
+        stockDAO.deleteOldInstantData();
         updateInstantData();
         updateHistoricalData();
     }
@@ -89,7 +90,7 @@ public class StockUpdateTasks {
 
         logger.info("going for historical data: " + symbol + " (" + updater.getClass().getSimpleName() + ")");
         List<DayPrice> dayPrices = updater.get(symbol);
-        Stock stock = findOrCreateStock(symbol);
+        Stock stock = stockDAO.findOrCreateStock(symbol);
         stock.updateDayPrices(dayPrices);
         logger.info("historical data finished: " + symbol + " (" + updater.getClass().getSimpleName() + ")");
     }
@@ -100,18 +101,11 @@ public class StockUpdateTasks {
         logger.info("going for instant data: " + symbol);
         InstantPrice price = yahooInstant.get(symbol);
         if (price != null) {
-            Stock stock = findOrCreateStock(symbol);
+            Stock stock = stockDAO.findOrCreateStock(symbol);
             stock.updateInstantPrice(price);
             logger.info("instant data finished: " + symbol);
         }
     }
 
-    private Stock findOrCreateStock(String symbol) {
-        Stock stock = stockDAO.findStock(symbol);
-        if (stock == null) {
-            stock = new Stock(symbol);
-            stock = em.merge(stock);
-        }
-        return stock;
-    }
+
 }
