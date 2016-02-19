@@ -8,8 +8,10 @@
 			<property name="javax.persistence.jdbc.user" value="STOCK"/>
 			<property name="javax.persistence.jdbc.password" value="STOCK"/>
 
+
 			<property name="eclipselink.ddl-generation" value="create-or-extend-tables"/>
 			<property name="eclipselink.ddl-generation.output-mode" value="database"/>
+
 
 			<property name="eclipselink.target-database" value="Derby"/>
 			<property name="eclipselink.platform.class.name" value="org.eclipse.persistence.platform.database.DerbyPlatform"/>
