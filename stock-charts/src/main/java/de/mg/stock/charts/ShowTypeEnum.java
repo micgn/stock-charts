@@ -17,5 +17,5 @@
 package de.mg.stock.charts;
 
 enum ShowTypeEnum {
-    WORLD, EMERGING, SMALL200, ALL, AGGREGATED;
+    WORLD, EMERGING, SMALL200, ALL, AGGREGATED, ALL_IN_ONE;
 }

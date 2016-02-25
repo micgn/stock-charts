@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 
 import static de.mg.stock.charts.ShowTypeEnum.AGGREGATED;
 import static de.mg.stock.charts.ShowTypeEnum.ALL;
+import static de.mg.stock.charts.ShowTypeEnum.ALL_IN_ONE;
 import static de.mg.stock.charts.ShowTypeEnum.EMERGING;
 import static de.mg.stock.charts.ShowTypeEnum.SMALL200;
 import static de.mg.stock.charts.ShowTypeEnum.WORLD;
@@ -80,13 +81,14 @@ public class ChartsController {
     }
 
     public void showAggregated() {
-        if (sinceDate.getValue() == null) {
-            sinceDate.setValue(LocalDate.of(2015, 1, 1));
-        }
-        percentageSelection.selectToggle(percentageSelection.getToggles().get(1));
-        updater.setShowPercentages(true);
-
+        setDefaultSinceIfMissingAndPercentages();
         updater.setShowType(AGGREGATED);
+        trigger();
+    }
+
+    public void showAllInOne() {
+        setDefaultSinceIfMissingAndPercentages();
+        updater.setShowType(ALL_IN_ONE);
         trigger();
     }
 
@@ -107,6 +109,14 @@ public class ChartsController {
     public void update() {
         ChartsUpdater.INSTANCE.updateStatus(LocalDateTime.now());
         trigger();
+    }
+
+    private void setDefaultSinceIfMissingAndPercentages() {
+        if (sinceDate.getValue() == null) {
+            sinceDate.setValue(LocalDate.of(2015, 1, 1));
+        }
+        percentageSelection.selectToggle(percentageSelection.getToggles().get(1));
+        updater.setShowPercentages(true);
     }
 
     private void trigger() {

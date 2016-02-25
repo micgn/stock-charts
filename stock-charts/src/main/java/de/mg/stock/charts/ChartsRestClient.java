@@ -17,6 +17,7 @@
 package de.mg.stock.charts;
 
 
+import de.mg.stock.dto.AllInOneChartDto;
 import de.mg.stock.dto.ChartDataDTO;
 import de.mg.stock.dto.StocksEnum;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
@@ -62,6 +63,12 @@ class ChartsRestClient {
         String sinceStr = since.format(DateTimeFormatter.ofPattern("ddMMyyyy", Locale.ENGLISH));
         String path = String.format("aggregatedChartData/%s/%d", sinceStr, points);
         return retrieve(ChartDataDTO.class, path);
+    }
+
+    AllInOneChartDto getAllInOneChartData(LocalDate since, int points) {
+        String sinceStr = since.format(DateTimeFormatter.ofPattern("ddMMyyyy", Locale.ENGLISH));
+        String path = String.format("allInOneChartData/%s/%d", sinceStr, points);
+        return retrieve(AllInOneChartDto.class, path);
     }
 
     String getBackup() {

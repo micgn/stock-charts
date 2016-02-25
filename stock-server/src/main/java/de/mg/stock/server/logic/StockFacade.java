@@ -16,6 +16,7 @@
 
 package de.mg.stock.server.logic;
 
+import de.mg.stock.dto.AllInOneChartDto;
 import de.mg.stock.dto.ChartDataDTO;
 import de.mg.stock.dto.StocksEnum;
 import de.mg.stock.server.dao.StockDAO;
@@ -118,6 +119,17 @@ public class StockFacade {
             since = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("ddMMyyyy", Locale.ENGLISH));
         }
         return (since == null) ? Optional.empty() : Optional.of(since);
+    }
+
+    @GET
+    @Produces(APPLICATION_XML)
+    @Path("allInOneChartData/{date}/{points}")
+    public Response getAllInOneChartData(@PathParam("date") String dateStr,
+                                         @PathParam("points") String pointsStr) {
+
+        List<Stock> all = stockDAO.findAllStocks();
+        AllInOneChartDto data = chartBuilder.createAllInOne(all, Integer.valueOf(pointsStr), toDate(dateStr).get());
+        return Response.status(Response.Status.OK).entity(data).build();
     }
 
     @GET

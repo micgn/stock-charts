@@ -16,8 +16,11 @@
 
 package de.mg.stock.server.logic;
 
+import de.mg.stock.dto.AllInOneChartDto;
+import de.mg.stock.dto.AllInOneChartItemDto;
 import de.mg.stock.dto.ChartDataDTO;
 import de.mg.stock.dto.ChartItemDTO;
+import de.mg.stock.dto.StocksEnum;
 import de.mg.stock.server.model.DayPrice;
 import de.mg.stock.server.model.InstantPrice;
 import de.mg.stock.server.model.Stock;
@@ -99,48 +102,14 @@ public class ChartBuilder {
         if (stocks.size() != stockWeights.size())
             throw new RuntimeException("different amounts of stocks and stock weights");
 
-        // create several item lists after since date
-        List<Map<LocalDate, ChartItemDTO>> itemMapList = new ArrayList<>();
-        for (Stock stock : stocks) {
-            Map<LocalDate, ChartItemDTO> items = new HashMap<>();
-            stock.getDayPrices().stream().
-                    filter(dp -> !since.isPresent() || dp.getDay().isAfter(since.get())).
-                    forEach(dp -> {
-                        items.put(dp.getDay(), new ChartItemDTO(dp.getDay().atStartOfDay(), null, null, dp.getAverage(), false));
-                    });
-            itemMapList.add(items);
-        }
+        Map<LocalDate, List<Double>> avgPercentsPerDate = avgPercentsPerDate(stocks, since);
 
-        // find intersection dates
-        Set<LocalDate> intersectionDates = new HashSet<>();
-        itemMapList.get(0).keySet().stream().forEach(
-                dayPrice -> intersectionDates.add(LocalDate.ofYearDay(dayPrice.getYear(), dayPrice.getDayOfYear())));
-        itemMapList.stream().skip(1).forEach(items -> intersectionDates.retainAll(items.keySet()));
-
-        if (intersectionDates.size() == 0)
-            throw new RuntimeException("no intersection found");
-
-        // find first averages for calculating percentages
-        LocalDate firstDate = intersectionDates.stream().min(LocalDate::compareTo).get();
-        List<Long> firstAverages = new ArrayList<>();
-        itemMapList.stream().forEach(map -> firstAverages.add(map.get(firstDate).getAverageLong()));
-        if (firstAverages.contains(null))
-            throw new RuntimeException("missing first average for percentage calculation");
-
-        // calculate percentages, aggregate all stocks into one list
         List<ChartItemDTO> aggregatedItemList = new ArrayList<>();
-        for (LocalDate date : intersectionDates) {
-            List<Double> averages = new ArrayList<>();
-            for (int i = 0; i < itemMapList.size(); i++) {
-                ChartItemDTO itemDto = itemMapList.get(i).get(date);
-                long avg = (itemDto.getAverageLong() != null) ? itemDto.getAverageLong() : 0L;
-                long first = firstAverages.get(i);
-                double avgPercent = 1.0 * (avg - first) / first;
-                averages.add(avgPercent);
-            }
+        for (LocalDate date : avgPercentsPerDate.keySet()) {
+            List<Double> avgPercents = avgPercentsPerDate.get(date);
             double aggregatedAvgPercent = 0;
-            for (int i = 0; i < averages.size(); i++) {
-                double avg = averages.get(i);
+            for (int i = 0; i < avgPercents.size(); i++) {
+                double avg = avgPercents.get(i);
                 aggregatedAvgPercent += avg * stockWeights.get(i) / 100.0;
             }
 
@@ -150,12 +119,83 @@ public class ChartBuilder {
         }
 
         aggregatedItemList.sort((i1, i2) -> i1.getDateTime().compareTo(i2.getDateTime()));
-
         aggregate(aggregatedItemList, points);
 
         ChartDataDTO dto = new ChartDataDTO("aggregated", LocalDateTime.now());
         dto.getItems().addAll(aggregatedItemList);
         return dto;
+    }
+
+    public AllInOneChartDto createAllInOne(List<Stock> stocks, int points, LocalDate since) {
+
+        Map<LocalDate, List<Double>> avgPercentsPerDate = avgPercentsPerDate(stocks, Optional.of(since));
+
+        List<AllInOneChartItemDto> items = new ArrayList<>();
+        for (LocalDate date : avgPercentsPerDate.keySet()) {
+            List<Double> avgs = avgPercentsPerDate.get(date);
+
+            AllInOneChartItemDto item = new AllInOneChartItemDto();
+            item.setDateTime(date.atStartOfDay());
+            for (int i = 0; i < avgs.size(); i++) {
+                double avg = (avgs.get(i) != null) ? avgs.get(i) : 0.0;
+                long avgLong = Math.round(avg * 100 * 100);
+                item.addAverageLong(StocksEnum.of(stocks.get(i).getSymbol()), avgLong);
+            }
+            items.add(item);
+        }
+
+        items.sort((i1, i2) -> i1.getDateTime().compareTo(i2.getDateTime()));
+
+        // TODO aggregation to max points, if needed
+
+        AllInOneChartDto dto = new AllInOneChartDto();
+        dto.setItems(items);
+        return dto;
+    }
+
+    private Map<LocalDate, List<Double>> avgPercentsPerDate(List<Stock> stocks,  Optional<LocalDate> since) {
+
+        // create several item lists after since date
+        List<Map<LocalDate, Long>> avgPerDateList = new ArrayList<>();
+        for (Stock stock : stocks) {
+            Map<LocalDate, Long> avgPerDate = new HashMap<>();
+            stock.getDayPrices().stream().
+                    filter(dp -> !since.isPresent() || dp.getDay().isAfter(since.get())).
+                    forEach(dp ->
+                            avgPerDate.put(dp.getDay(), dp.getAverage())
+                    );
+            avgPerDateList.add(avgPerDate);
+        }
+
+        // find intersection dates
+        Set<LocalDate> intersectionDates = new HashSet<>();
+        avgPerDateList.get(0).keySet().stream().forEach(
+                dayPrice -> intersectionDates.add(LocalDate.ofYearDay(dayPrice.getYear(), dayPrice.getDayOfYear())));
+        avgPerDateList.stream().skip(1).forEach(items -> intersectionDates.retainAll(items.keySet()));
+
+        if (intersectionDates.size() == 0)
+            throw new RuntimeException("no intersection found");
+
+        // find first averages, needed for calculating percentages
+        LocalDate firstDate = intersectionDates.stream().min(LocalDate::compareTo).get();
+        List<Long> firstAverages = new ArrayList<>();
+        avgPerDateList.stream().forEach(avgPerDate -> firstAverages.add(avgPerDate.get(firstDate)));
+        if (firstAverages.contains(null))
+            throw new RuntimeException("missing first average for percentage calculation");
+
+        Map<LocalDate, List<Double>> avgPercentsPerDate = new HashMap<>();
+        for (LocalDate date : intersectionDates) {
+            List<Double> averages = new ArrayList<>();
+            for (int i = 0; i < avgPerDateList.size(); i++) {
+                Long avg = avgPerDateList.get(i).get(date);
+                if (avg == null) avg = 0L;
+                long first = firstAverages.get(i);
+                double avgPercent = 1.0 * (avg - first) / first;
+                averages.add(avgPercent);
+            }
+            avgPercentsPerDate.put(date, averages);
+        }
+        return avgPercentsPerDate;
     }
 
     private void aggregate(List<ChartItemDTO> items, int points) {
@@ -221,4 +261,6 @@ public class ChartBuilder {
     private long toLong(double d) {
         return Math.round(d * 100 * 100);
     }
+
+
 }

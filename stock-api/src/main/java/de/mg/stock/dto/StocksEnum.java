@@ -30,6 +30,13 @@ public enum StocksEnum {
     // the stock's percentage for calculating aggregated charts data
     private int weight;
 
+    public static StocksEnum of(String symbol) {
+        if (WORLD.symbol.equals(symbol)) return WORLD;
+        else if (EMERGING.symbol.equals(symbol)) return EMERGING;
+        else if (SMALL200.symbol.equals(symbol)) return SMALL200;
+        else return null;
+    }
+
     StocksEnum(String symbol, String name, int weight) {
         this.symbol = symbol;
         this.name = name;
