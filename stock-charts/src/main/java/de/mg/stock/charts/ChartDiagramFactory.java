@@ -51,7 +51,8 @@ public class ChartDiagramFactory {
         XYChart.Series seriesAverage = new XYChart.Series();
         lineChart.getData().addAll(seriesMax, seriesMin, seriesAverage);
 
-        lineChart.setLegendVisible(false);
+        lineChart.setLegendVisible(true);
+        lineChart.setLegendSide(Side.RIGHT);
 
         container.getChildren().add(lineChart);
 

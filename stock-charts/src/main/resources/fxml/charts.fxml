@@ -33,6 +33,7 @@
                         <RadioMenuItem mnemonicParsing="false" onAction="#showSmall200" text="European Small 200" toggleGroup="$chart" />
                         <RadioMenuItem mnemonicParsing="false" onAction="#showAll" text="All" toggleGroup="$chart" />
                         <RadioMenuItem mnemonicParsing="false" onAction="#showAggregated" text="Aggregated" toggleGroup="$chart" />
+                        <RadioMenuItem mnemonicParsing="false" onAction="#showAllInOne" text="All In One" toggleGroup="$chart" />
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <RadioMenuItem mnemonicParsing="false" onAction="#showAbsolute" selected="true" text="Absolute">
                            <toggleGroup>

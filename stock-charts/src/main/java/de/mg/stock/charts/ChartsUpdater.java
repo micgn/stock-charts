@@ -16,6 +16,7 @@
 
 package de.mg.stock.charts;
 
+import de.mg.stock.dto.AllInOneChartDto;
 import de.mg.stock.dto.ChartDataDTO;
 import de.mg.stock.dto.StocksEnum;
 import javafx.scene.chart.LineChart;
@@ -73,6 +74,9 @@ class ChartsUpdater {
                 case SMALL200:
                     drawCharts(SMALL200.getName());
                     break;
+                case ALL_IN_ONE:
+                    drawCharts("all in one");
+                    break;
                 default:
                     throw new RuntimeException("wrong type");
             }
@@ -110,6 +114,9 @@ class ChartsUpdater {
                 case SMALL200:
                     updateChart(load(SMALL200), 0);
                     break;
+                case ALL_IN_ONE:
+                    updateAllInOne();
+                    break;
                 default:
                     throw new RuntimeException("wrong type");
             }
@@ -140,8 +147,11 @@ class ChartsUpdater {
         XYChart.Series seriesMin = chart.getData().get(1);
         XYChart.Series seriesAverage = chart.getData().get(2);
         seriesMax.getData().clear();
+        seriesMax.setName("max");
         seriesMin.getData().clear();
+        seriesMin.setName("min");
         seriesAverage.getData().clear();
+        seriesAverage.setName("average");
 
         serverData.getItems().stream().forEach(data -> {
 
@@ -162,6 +172,36 @@ class ChartsUpdater {
     private void updateLastChartData(LocalDateTime dataTime) {
         if (lastChartData == null || dataTime.isAfter(lastChartData))
             lastChartData = dataTime;
+    }
+
+    private void updateAllInOne() {
+
+        LineChart<String, Number> chart = (LineChart<String, Number>) chartsContainer.getChildren().get(0);
+
+        XYChart.Series seriesWorld = chart.getData().get(0);
+        XYChart.Series seriesEmerging = chart.getData().get(1);
+        XYChart.Series seriesSmall200 = chart.getData().get(2);
+        seriesWorld.getData().clear();
+        seriesWorld.setName(WORLD.getName());
+        seriesEmerging.getData().clear();
+        seriesEmerging.setName(EMERGING.getName());
+        seriesSmall200.getData().clear();
+        seriesSmall200.setName(SMALL200.getName());
+
+        AllInOneChartDto dto = ChartsRestClient.INSTANCE.getAllInOneChartData(since, points);
+        dto.getItems().stream().forEach(data -> {
+
+            final String pattern = "dd.MM.yy";
+            String label = data.getDateTime().format(DateTimeFormatter.ofPattern(pattern));
+
+            if (data.getAverage(WORLD) != null)
+                seriesWorld.getData().add(new XYChart.Data(label, data.getAverage(WORLD)));
+            if (data.getAverage(EMERGING) != null)
+                seriesEmerging.getData().add(new XYChart.Data(label, data.getAverage(EMERGING)));
+            if (data.getAverage(SMALL200) != null)
+                seriesSmall200.getData().add(new XYChart.Data(label, data.getAverage(SMALL200)));
+        });
+        updateLastChartData(dto.lastDate());
     }
 
 
