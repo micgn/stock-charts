@@ -75,7 +75,7 @@ public class ChartBuilder {
         stock.getInstantPrices().stream().
                 sorted((p1, p2) -> p1.getTime().compareTo(p2.getTime())).
                 forEach(ip ->
-                        instantItems.add(new ChartItemDTO(ip.getTime(), ip.getAsk(), ip.getBid(), average(ip.getAsk(), ip.getBid()), true))
+                        instantItems.add(new ChartItemDTO(ip.getTime(), ip.getMin(), ip.getMax(), average(ip.getMin(), ip.getMax()), true))
                 );
         aggregate(instantItems, instantPoints);
 

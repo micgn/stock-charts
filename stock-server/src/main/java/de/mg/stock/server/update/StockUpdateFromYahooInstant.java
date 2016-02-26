@@ -91,7 +91,7 @@ class StockUpdateFromYahooInstant {
         result.setDayMin(dayMin);
 
         if (result.getAsk() == null && result.getBid() == null && result.getDayMax() == null && result.getDayMin() == null) {
-            logger.info("no meaningful values for " + symbol);
+            logger.info("no meaningful values for " + symbol + ": " + response);
             return null;
         }
 
