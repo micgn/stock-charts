@@ -94,6 +94,17 @@ public class ChartItemDTO implements Serializable {
         this.instantPrice = instantPrice;
     }
 
+    public boolean isValid() {
+        boolean valid = true;
+        if (minLong != null && maxLong != null)
+            valid = minLong <= maxLong;
+        if (minLong != null && averageLong != null)
+            valid = valid && minLong <= averageLong;
+        if (averageLong != null && maxLong != null)
+            valid = valid && averageLong <= maxLong;
+        return valid;
+    }
+
     @Override
     public String toString() {
         return "ChartItemDTO{" +

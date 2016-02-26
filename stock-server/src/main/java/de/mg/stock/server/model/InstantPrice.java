@@ -39,8 +39,16 @@ public class InstantPrice extends AbstractPrice {
     @Temporal(TemporalType.TIMESTAMP)
     private Date time;
 
+    /**
+     * buy price
+     */
     private Long ask;
+
+    /**
+     * sell price
+     */
     private Long bid;
+
     private Long dayMin;
     private Long dayMax;
 
@@ -87,6 +95,17 @@ public class InstantPrice extends AbstractPrice {
         this.dayMax = dayMax;
     }
 
+    public Long getMin() {
+        if (ask == null) return bid;
+        if (bid == null) return ask;
+        return (ask.longValue() < bid.longValue()) ? ask : bid;
+    }
+
+    public Long getMax() {
+        if (ask == null) return bid;
+        if (bid == null) return ask;
+        return (ask.longValue() > bid.longValue()) ? ask : bid;
+    }
 
     public boolean hasSamePrices(InstantPrice that) {
 
@@ -94,6 +113,14 @@ public class InstantPrice extends AbstractPrice {
         if (bid != null ? !bid.equals(that.bid) : that.bid != null) return false;
         if (dayMin != null ? !dayMin.equals(that.dayMin) : that.dayMin != null) return false;
         return dayMax != null ? dayMax.equals(that.dayMax) : that.dayMax == null;
+    }
+
+    public boolean isValid() {
+        boolean valid = true;
+        if (dayMax != null && dayMin != null) {
+            valid = dayMin <= dayMax;
+        }
+        return valid;
     }
 
     @Override
@@ -121,5 +148,16 @@ public class InstantPrice extends AbstractPrice {
                 .append(dayMin)
                 .append(dayMax)
                 .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "InstantPrice{" +
+                "time=" + time +
+                ", ask=" + ask +
+                ", bid=" + bid +
+                ", dayMin=" + dayMin +
+                ", dayMax=" + dayMax +
+                '}';
     }
 }

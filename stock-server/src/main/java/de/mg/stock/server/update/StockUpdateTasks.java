@@ -93,6 +93,8 @@ public class StockUpdateTasks {
         Stock stock = stockDAO.findOrCreateStock(symbol);
         stock.updateDayPrices(dayPrices);
         logger.info("historical data finished: " + symbol + " (" + updater.getClass().getSimpleName() + ")");
+        for (DayPrice dp : dayPrices)
+            if (!dp.isValid()) logger.warning("invalid: " + dp);
     }
 
     private void updateInstantData(StocksEnum stocksEnum) {
@@ -102,8 +104,12 @@ public class StockUpdateTasks {
         InstantPrice price = yahooInstant.get(symbol);
         if (price != null) {
             Stock stock = stockDAO.findOrCreateStock(symbol);
-            stock.updateInstantPrice(price);
-            logger.info("instant data finished: " + symbol);
+            if (price.isValid()) {
+                stock.updateInstantPrice(price);
+                logger.info("instant data finished: " + symbol);
+            } else {
+                logger.warning("invalid: " + price);
+            }
         }
     }
 

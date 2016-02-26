@@ -84,6 +84,12 @@ public class DayPrice extends AbstractPrice {
         return (min.longValue() + max.longValue()) / 2;
     }
 
+    public boolean isValid() {
+        if (max != null && min != null) {
+            return min <= max;
+        } else return true;
+    }
+
     @Override
     public String toString() {
         return "DayPrice{" +

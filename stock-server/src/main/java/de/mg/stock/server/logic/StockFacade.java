@@ -18,6 +18,7 @@ package de.mg.stock.server.logic;
 
 import de.mg.stock.dto.AllInOneChartDto;
 import de.mg.stock.dto.ChartDataDTO;
+import de.mg.stock.dto.ChartItemDTO;
 import de.mg.stock.dto.StocksEnum;
 import de.mg.stock.server.dao.StockDAO;
 import de.mg.stock.server.model.Stock;
@@ -87,6 +88,10 @@ public class StockFacade {
         em.detach(stock);
 
         ChartDataDTO data = chartBuilder.createAggregated(stock, Integer.valueOf(pointsStr), toDate(dateStr), Boolean.valueOf(percentagesStr));
+
+        for (ChartItemDTO item : data.getItems()) {
+            if (!item.isValid()) logger.warning("invalid: " + item);
+        }
 
         return Response.status(Response.Status.OK).entity(data).build();
     }
