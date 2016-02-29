@@ -20,6 +20,7 @@ package de.mg.stock.charts;
 import de.mg.stock.dto.AllInOneChartDto;
 import de.mg.stock.dto.ChartDataDTO;
 import de.mg.stock.dto.StocksEnum;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 
 import javax.net.ssl.SSLContext;
@@ -108,6 +109,8 @@ class ChartsRestClient {
         }
 
         Client client = ClientBuilder.newBuilder().sslContext(sslContext).hostnameVerifier((var1, var2) -> true).build();
+        client.property(ClientProperties.CONNECT_TIMEOUT, 3000);
+        client.property(ClientProperties.READ_TIMEOUT, 5000);
 
         HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(ChartsMain.BASIC_AUTH_LOGIN, ChartsMain.BASIC_AUTH_PASSWORD);
         client.register(feature);
