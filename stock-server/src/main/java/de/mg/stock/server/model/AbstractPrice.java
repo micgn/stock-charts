@@ -16,14 +16,7 @@
 
 package de.mg.stock.server.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import javax.persistence.*;
 import javax.xml.bind.annotation.XmlTransient;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -31,7 +24,7 @@ import java.util.Date;
 import static de.mg.stock.server.util.DateConverters.toDate;
 import static de.mg.stock.server.util.DateConverters.toLocalDateTime;
 
-@Entity
+@MappedSuperclass
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public abstract class AbstractPrice extends AbstractEntity {
 

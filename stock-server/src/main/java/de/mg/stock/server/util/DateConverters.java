@@ -18,12 +18,7 @@ package de.mg.stock.server.util;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.util.Date;
 import java.util.Locale;
 
@@ -51,23 +46,28 @@ public final class DateConverters {
 
     public static LocalDate toLocalDate(Date date) {
         if (date == null) return null;
-        Instant instantTime = date.toInstant();
+        Instant instantTime = toUtilDate(date).toInstant();
         ZonedDateTime zdt = instantTime.atZone(ZoneId.systemDefault());
         return zdt.toLocalDate();
     }
 
     public static LocalTime toLocalTime(Date date) {
         if (date == null) return null;
-        Instant instantTime = date.toInstant();
+        Instant instantTime = toUtilDate(date).toInstant();
         ZonedDateTime zdt = instantTime.atZone(ZoneId.systemDefault());
         return zdt.toLocalTime();
     }
 
     public static LocalDateTime toLocalDateTime(Date date) {
         if (date == null) return null;
-        Instant instantTime = date.toInstant();
+        Instant instantTime = toUtilDate(date).toInstant();
         ZonedDateTime zdt = instantTime.atZone(ZoneId.systemDefault());
         return zdt.toLocalDateTime();
+    }
+
+    // java.sql.Date does not implement toInstant()
+    private static Date toUtilDate(Date date) {
+        return (date != null) ? new Date(date.getTime()) : null;
     }
 
     public static LocalDate toLocalDate(String s, String format) {

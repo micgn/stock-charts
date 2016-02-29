@@ -31,7 +31,7 @@ import static de.mg.stock.server.util.NumberUtils.toLong;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 @Singleton
-class StockUpdateFromYahooInstant {
+public class StockUpdateFromYahooInstant {
 
     private static Logger logger = Logger.getLogger(StockUpdateFromYahooInstant.class.getName());
 

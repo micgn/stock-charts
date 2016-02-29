@@ -42,7 +42,8 @@ public class ChartsMain extends Application {
 
         if (args.length == 0) {
             usage();
-            serverUrl = "https://localhost:8181/stock-server-1.0-SNAPSHOT/rest/";
+            //serverUrl = "https://localhost:8181/";
+            serverUrl = "http://localhost:8080/";
         } else if (args.length == 1) {
             serverUrl = args[0];
         } else {

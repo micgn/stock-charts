@@ -35,7 +35,7 @@ public class StockDAO {
 
     private static Logger logger = Logger.getLogger(StockDAO.class.getName());
 
-    @PersistenceContext
+    @PersistenceContext(name = "stock")
     private EntityManager em;
 
     public Stock findStock(String symbol) {
