@@ -102,6 +102,7 @@ public class ChartsController {
     }
 
     public void showPercentage() {
+        setDefaultSinceIfMissingAndPercentages();
         updater.setShowPercentages(true);
         trigger();
     }
