@@ -81,7 +81,8 @@ public class ChartsMain extends Application {
         VBox chartsContainer = (VBox) ((ScrollPane) rootNode.getChildrenUnmodifiable().get(1)).getContent();
 
         Label statusLeft = (Label) scene.lookup("#statusLeft");
-        ChartsUpdater.INSTANCE.initialize(chartsContainer, statusLeft);
+        Label statusRight = (Label) scene.lookup("#statusRight");
+        ChartsUpdater.INSTANCE.initialize(chartsContainer, statusLeft, statusRight);
 
         stage.show();
 

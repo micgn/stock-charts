@@ -24,6 +24,7 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 
+import javax.ws.rs.ProcessingException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,7 +39,7 @@ class ChartsUpdater {
     public static final ChartsUpdater INSTANCE = new ChartsUpdater();
 
     private VBox chartsContainer;
-    private Label statusLeft;
+    private Label statusLeft, statusRight;
 
     private ShowTypeEnum showType = null;
     private boolean showPercentages = false;
@@ -51,9 +52,10 @@ class ChartsUpdater {
     private ChartsUpdater() {
     }
 
-    void initialize(VBox chartsContainer, Label statusLeft) {
+    void initialize(VBox chartsContainer, Label statusLeft, Label statusRight) {
         this.chartsContainer = chartsContainer;
         this.statusLeft = statusLeft;
+        this.statusRight = statusRight;
     }
 
     void reinitializeCharts() {
@@ -95,8 +97,7 @@ class ChartsUpdater {
             switch (showType) {
                 case AGGREGATED: {
                     if (since != null) {
-                        ChartDataDTO data = ChartsRestClient.INSTANCE.getAggregatedChartData(since, points);
-                        updateChart(data, 0);
+                        updateChart(load(null), 0);
                     }
                     break;
                 }
@@ -130,16 +131,29 @@ class ChartsUpdater {
     }
 
     private ChartDataDTO load(StocksEnum stock) {
-        ChartDataDTO result;
-        if (since == null)
-            result = ChartsRestClient.INSTANCE.getChartData(stock, points);
-        else
-            result = ChartsRestClient.INSTANCE.getChartDataSince(stock, since, showPercentages, points);
-        return result;
+        try {
+            ChartDataDTO result;
+            if (stock != null) {
+                if (since == null)
+                    result = ChartsRestClient.INSTANCE.getChartData(stock, points);
+                else
+                    result = ChartsRestClient.INSTANCE.getChartDataSince(stock, since, showPercentages, points);
+            } else {
+                result = ChartsRestClient.INSTANCE.getAggregatedChartData(since, points);
+            }
+            statusRight.setText("successfully loaded...");
+            return result;
+
+        } catch (ProcessingException e) {
+            statusRight.setText("server too slow...");
+            return null;
+        }
     }
 
 
     private void updateChart(ChartDataDTO serverData, int diagramIndex) {
+
+        if (serverData == null) return;
 
         LineChart<String, Number> chart = (LineChart<String, Number>) chartsContainer.getChildren().get(diagramIndex);
 
