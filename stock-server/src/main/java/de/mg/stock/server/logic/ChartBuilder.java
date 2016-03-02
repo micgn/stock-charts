@@ -41,7 +41,7 @@ import java.util.function.Predicate;
 @Singleton
 public class ChartBuilder {
 
-    public ChartDataDTO createAggregated(Stock stock, int points, Optional<LocalDate> since, boolean percentages) {
+    public ChartDataDTO createOne(Stock stock, int points, Optional<LocalDate> since, boolean percentages) {
 
         ChartDataDTO dto = new ChartDataDTO(stock.getName(), LocalDateTime.now());
 
@@ -88,13 +88,6 @@ public class ChartBuilder {
         return dto;
     }
 
-    /**
-     * @param stocks       stocks to be aggregated in one chart
-     * @param stockWeights percentages of the given stocks to be taken into account
-     * @param points
-     * @param since
-     * @return chart with percentages, only for historical data
-     */
     public ChartDataDTO createAggregated(List<Stock> stocks, List<Integer> stockWeights, int points, Optional<LocalDate> since) {
 
         if (stocks.size() < 2)
@@ -153,7 +146,7 @@ public class ChartBuilder {
         return dto;
     }
 
-    private Map<LocalDate, List<Double>> avgPercentsPerDate(List<Stock> stocks,  Optional<LocalDate> since) {
+    private Map<LocalDate, List<Double>> avgPercentsPerDate(List<Stock> stocks, Optional<LocalDate> since) {
 
         // create several item lists after since date
         List<Map<LocalDate, Long>> avgPerDateList = new ArrayList<>();
@@ -244,23 +237,30 @@ public class ChartBuilder {
     private void transformIntoPercentages(List<ChartItemDTO> items) {
         if (items.isEmpty()) return;
 
-        Long firstMin = items.get(0).getMinLong();
-        Long firstMax = items.get(0).getMaxLong();
-        Long firstAvg = items.get(0).getAverageLong();
+        ChartItemDTO first = items.get(0);
+        double firstAvg;
+        if (first.getAverageLong() != null) {
+            firstAvg = first.getAverageLong().doubleValue();
+        } else if (first.getMinLong() != null && first.getMaxLong() != null) {
+            firstAvg = (first.getMinLong().doubleValue() + first.getMaxLong().doubleValue()) / 2.0;
+        } else {
+            throw new RuntimeException("no first element for calculating percentages");
+        }
 
         items.stream().forEach(item -> {
-            double minPercent = (firstMin != null) ? (item.getMinLong() - firstMin) / firstMin.doubleValue() : 0;
-            double maxPercent = (firstMax != null) ? (item.getMaxLong() - firstMax) / firstMax.doubleValue() : 0;
-            double avgPercent = (firstAvg != null) ? (item.getAverageLong() - firstAvg) / firstAvg.doubleValue() : 0;
-            item.setMinLong(toLong(minPercent));
-            item.setMaxLong(toLong(maxPercent));
-            item.setAverageLong(toLong(avgPercent));
+            item.setMinLong(percent(firstAvg, item.getMinLong()));
+            item.setMaxLong(percent(firstAvg, item.getMaxLong()));
+            item.setAverageLong(percent(firstAvg, item.getAverageLong()));
         });
     }
 
-    private long toLong(double d) {
-        return Math.round(d * 100 * 100);
+    private long percent(double first, Long value) {
+        if (first == 0.0 || value == null || value == 0.0) {
+            return 0;
+        }
+        double percent = (value.doubleValue() - first) / first;
+        long percentLong = Math.round(percent * 100 * 100);
+        return percentLong;
     }
-
 
 }
