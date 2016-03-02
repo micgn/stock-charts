@@ -87,7 +87,7 @@ public class StockFacade {
         }
         em.detach(stock);
 
-        ChartDataDTO data = chartBuilder.createAggregated(stock, Integer.valueOf(pointsStr), toDate(dateStr), Boolean.valueOf(percentagesStr));
+        ChartDataDTO data = chartBuilder.createOne(stock, Integer.valueOf(pointsStr), toDate(dateStr), Boolean.valueOf(percentagesStr));
 
         for (ChartItemDTO item : data.getItems()) {
             if (!item.isValid()) logger.warning("invalid: " + item);

@@ -22,7 +22,7 @@ public class ChartBuilderTest {
         stock.getDayPrices().add(new DayPrice(LocalDate.of(2016, 1, 5), 3L, 3L));
         stock.getDayPrices().add(new DayPrice(LocalDate.of(2016, 1, 1), 1L, 5L));
         stock.getDayPrices().add(new DayPrice(LocalDate.of(2016, 1, 3), 2L, 3L));
-        ChartDataDTO dto = builder.createAggregated(stock, 2, Optional.empty(), false);
+        ChartDataDTO dto = builder.createOne(stock, 2, Optional.empty(), false);
         System.out.println(dto);
     }
 
