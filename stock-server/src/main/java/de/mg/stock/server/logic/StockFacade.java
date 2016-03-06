@@ -142,8 +142,10 @@ public class StockFacade {
     @Path("backup")
     public List<Stock> backup() {
         List<Stock> all = stockDAO.findAllStocks();
+        logger.info("backup: " + stockStats(all));
         return all;
     }
+
 
     @POST
     @Consumes(APPLICATION_XML)
@@ -152,6 +154,7 @@ public class StockFacade {
         if (stocks == null || stocks.isEmpty()) {
             return Response.status(Response.Status.BAD_REQUEST).entity("missing xml in body").build();
         }
+        logger.info("restore: " + stockStats(stocks));
 
         List<Stock> peristentStocks = backup();
         peristentStocks.forEach(stock -> em.remove(stock));
@@ -169,4 +172,11 @@ public class StockFacade {
         return Response.status(Response.Status.OK).build();
     }
 
+    public static String stockStats(List<Stock> all) {
+        String stats = "";
+        for (Stock stock : all) {
+            stats += stock.toString() + "\n";
+        }
+        return (stats.length() == 0) ? "empty" : stats;
+    }
 }
