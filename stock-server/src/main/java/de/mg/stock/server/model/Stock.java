@@ -152,5 +152,9 @@ public class Stock extends AbstractEntity {
                 .append(symbol)
                 .toHashCode();
     }
+
+    public String toString() {
+        return String.format("%s: %d day prices and %d instant prices", symbol, dayPrices.size(), instantPrices.size());
+    }
 }
 

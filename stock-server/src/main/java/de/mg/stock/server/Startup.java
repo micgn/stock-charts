@@ -16,22 +16,31 @@
 
 package de.mg.stock.server;
 
+import de.mg.stock.server.dao.StockDAO;
+import de.mg.stock.server.logic.StockFacade;
 import de.mg.stock.server.update.StockUpdateTasks;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.Singleton;
 import javax.inject.Inject;
+import java.util.logging.Logger;
 
 @Singleton
 @javax.ejb.Startup
 @SuppressWarnings("unused")
 public class Startup {
 
+    private static Logger logger = Logger.getLogger(Startup.class.getName());
+
     @Inject
     private StockUpdateTasks stockUpdateTasks;
 
+    @Inject
+    private StockDAO stockDAO;
+
     @PostConstruct
     public void atStartup() {
+        logger.info("found: " + StockFacade.stockStats(stockDAO.findAllStocks()));
         stockUpdateTasks.updateAsync();
     }
 
