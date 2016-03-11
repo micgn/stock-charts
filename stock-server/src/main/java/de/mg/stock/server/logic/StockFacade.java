@@ -20,6 +20,7 @@ import de.mg.stock.dto.AllInOneChartDto;
 import de.mg.stock.dto.ChartDataDTO;
 import de.mg.stock.dto.ChartItemDTO;
 import de.mg.stock.dto.StocksEnum;
+import de.mg.stock.server.Config;
 import de.mg.stock.server.dao.StockDAO;
 import de.mg.stock.server.model.Stock;
 
@@ -63,6 +64,9 @@ public class StockFacade {
 
     @Inject
     private StockDAO stockDAO;
+
+    @Inject
+    private Config config;
 
     @GET
     @Produces(APPLICATION_XML)
@@ -151,6 +155,14 @@ public class StockFacade {
     @Consumes(APPLICATION_XML)
     @Path("restore")
     public Response restore(List<Stock> stocks) {
+
+        if (!config.isWriteAccessEnabled()) {
+            logger.warning("no write access!");
+            
+            return Response.status(Response.Status.FORBIDDEN).
+                    entity("server missing -D" + Config.SWITCH_WRITEACCESS).build();
+        }
+
         if (stocks == null || stocks.isEmpty()) {
             return Response.status(Response.Status.BAD_REQUEST).entity("missing xml in body").build();
         }

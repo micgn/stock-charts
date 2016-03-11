@@ -159,11 +159,11 @@ public class ChartsController {
             try {
                 List<String> lines = Files.readAllLines(selectedFile.toPath());
                 String in = lines.stream().collect(Collectors.joining());
-                boolean success = ChartsRestClient.INSTANCE.restoreBackup(in);
-                if (success) {
+                try {
+                    ChartsRestClient.INSTANCE.restoreBackup(in);
                     message("Importing...", "finished successfully");
-                } else {
-                    message("Importing...", "failed!");
+                } catch (ChartsRestClient.RestException e) {
+                    message("Importing...", "failed!\n" + e.getMsg());
                 }
 
             } catch (IOException e) {

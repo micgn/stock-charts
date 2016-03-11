@@ -77,9 +77,12 @@ class ChartsRestClient {
         return backupStr;
     }
 
-    boolean restoreBackup(String backup) {
-        Response r = webtarget().path("restore").request(MediaType.TEXT_PLAIN).post(Entity.entity(backup, MediaType.APPLICATION_XML));
-        return r.getStatus() == 200;
+    void restoreBackup(String backup) throws RestException {
+        Response rsp = webtarget().path("restore").request(MediaType.TEXT_PLAIN).post(Entity.entity(backup, MediaType.APPLICATION_XML));
+        if (rsp.getStatus() != 200) {
+            String msg = (rsp.hasEntity()) ? rsp.readEntity(String.class) : "";
+            throw new RestException(msg);
+        }
     }
 
     private <T> T retrieve(Class<T> resultClass, String path) {
@@ -89,7 +92,7 @@ class ChartsRestClient {
     }
 
     private WebTarget webtarget() {
-        SSLContext sslContext = null;
+        SSLContext sslContext;
         try {
             sslContext = SSLContext.getInstance("TLS");
             sslContext.init(null, new TrustManager[]{new X509TrustManager() {
@@ -120,4 +123,13 @@ class ChartsRestClient {
         return target;
     }
 
+    public class RestException extends Exception {
+        RestException(String msg) {
+            super(msg);
+        }
+
+        public String getMsg() {
+            return getMessage();
+        }
+    }
 }
