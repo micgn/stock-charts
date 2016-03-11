@@ -54,7 +54,7 @@ public class ChartBuilder {
             instantPoints = 0;
         }
 
-        Optional<InstantPrice> firstOpt = stock.getInstantPrices().stream().max((p1, p2) -> p1.getTime().compareTo(p2.getTime()));
+        Optional<InstantPrice> firstOpt = stock.getInstantPrices().stream().min((p1, p2) -> p1.getTime().compareTo(p2.getTime()));
         final LocalDateTime firstInstantPrice = (firstOpt.isPresent()) ? firstOpt.get().getTime() : LocalDateTime.MAX;
 
         Predicate<DayPrice> isAfterSinceAndBeforeInstantPrices = (DayPrice dp) -> {
