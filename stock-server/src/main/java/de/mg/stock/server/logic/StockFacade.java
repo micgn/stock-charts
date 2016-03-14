@@ -160,7 +160,7 @@ public class StockFacade {
             logger.warning("no write access!");
             
             return Response.status(Response.Status.FORBIDDEN).
-                    entity("server missing -D" + Config.SWITCH_WRITEACCESS).build();
+                    entity("server missing -D" + Config.SWITCH_WRITE_ACCESS).build();
         }
 
         if (stocks == null || stocks.isEmpty()) {

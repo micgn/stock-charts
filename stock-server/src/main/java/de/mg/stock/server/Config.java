@@ -23,15 +23,23 @@ import java.util.logging.Logger;
 @Singleton
 public class Config {
 
-    public static final String SWITCH_WRITEACCESS = "writeAccessEnabled";
+    public static final String SWITCH_WRITE_ACCESS = "writeAccessEnabled";
+    public static final String MAIL_HOST = "mailHost";
+    public static final String MAIL_FROM = "mailFrom";
+    public static final String MAIL_TO = "mailTo";
 
     private static Logger logger = Logger.getLogger(Config.class.getName());
 
     private boolean writeAccessEnabled = false;
+    private String smtpHost, alertMailFrom, alertMailTo;
 
     @PostConstruct
     void initialize() {
-        writeAccessEnabled = System.getProperty(SWITCH_WRITEACCESS) != null;
+        writeAccessEnabled = System.getProperty(SWITCH_WRITE_ACCESS) != null;
+        smtpHost = System.getProperty(MAIL_HOST);
+        alertMailFrom = System.getProperty(MAIL_FROM);
+        alertMailTo = System.getProperty(MAIL_TO);
+
         logger.info("Configuration initialized:\n" + this);
     }
 
@@ -39,10 +47,25 @@ public class Config {
         return writeAccessEnabled;
     }
 
+    public String getSmtpHost() {
+        return smtpHost;
+    }
+
+    public String getAlertMailFrom() {
+        return alertMailFrom;
+    }
+
+    public String getAlertMailTo() {
+        return alertMailTo;
+    }
+
     @Override
     public String toString() {
         return "Config{" +
                 "writeAccessEnabled=" + writeAccessEnabled +
+                ", smtpHost='" + smtpHost + '\'' +
+                ", alertMailFrom='" + alertMailFrom + '\'' +
+                ", alertMailTo='" + alertMailTo + '\'' +
                 '}';
     }
 }

@@ -16,6 +16,7 @@
 
 package de.mg.stock.server.dao;
 
+import de.mg.stock.server.model.AlertMailStatus;
 import de.mg.stock.server.model.Stock;
 
 import javax.inject.Singleton;
@@ -25,7 +26,9 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TemporalType;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import static de.mg.stock.server.util.DateConverters.toDate;
@@ -68,5 +71,23 @@ public class StockDAO {
                 executeUpdate();
 
         logger.info("deleted " + deleted + " old instant prices");
+    }
+
+    public Optional<Date> getLastAlertSent() {
+        AlertMailStatus status = getAlertMailStatus();
+        return (status == null) ? Optional.empty() : Optional.of(status.getLastAlertSent());
+    }
+
+    public void setLastAlertSent(Date date) {
+        AlertMailStatus status = getAlertMailStatus();
+        if (status == null) {
+            status = new AlertMailStatus();
+            status = em.merge(status);
+        }
+        status.setLastAlertSent(date);
+    }
+
+    private AlertMailStatus getAlertMailStatus() {
+        return (AlertMailStatus) em.createQuery("from " + AlertMailStatus.class.getSimpleName()).getSingleResult();
     }
 }
