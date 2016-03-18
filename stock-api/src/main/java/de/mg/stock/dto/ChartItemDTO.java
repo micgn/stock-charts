@@ -115,4 +115,41 @@ public class ChartItemDTO implements Serializable {
                 ", instantPrice=" + instantPrice +
                 '}';
     }
+
+    public static class Builder {
+        private LocalDateTime dateTime;
+        private Long minLong;
+        private Long maxLong;
+        private Long averageLong;
+        private boolean instantPrice;
+
+        public Builder setDateTime(LocalDateTime dateTime) {
+            this.dateTime = dateTime;
+            return this;
+        }
+
+        public Builder setMinLong(Long minLong) {
+            this.minLong = minLong;
+            return this;
+        }
+
+        public Builder setMaxLong(Long maxLong) {
+            this.maxLong = maxLong;
+            return this;
+        }
+
+        public Builder setAverageLong(Long averageLong) {
+            this.averageLong = averageLong;
+            return this;
+        }
+
+        public Builder setInstantPrice(boolean instantPrice) {
+            this.instantPrice = instantPrice;
+            return this;
+        }
+
+        public ChartItemDTO build() {
+            return new ChartItemDTO(dateTime, minLong, maxLong, averageLong, instantPrice);
+        }
+    }
 }

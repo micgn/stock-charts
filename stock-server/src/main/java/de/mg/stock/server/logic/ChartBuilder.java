@@ -38,6 +38,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import static java.lang.Math.round;
+import static java.util.Comparator.comparing;
+
 @Singleton
 public class ChartBuilder {
 
@@ -54,28 +57,43 @@ public class ChartBuilder {
             instantPoints = 0;
         }
 
-        Optional<InstantPrice> firstOpt = stock.getInstantPrices().stream().min((p1, p2) -> p1.getTime().compareTo(p2.getTime()));
-        final LocalDateTime firstInstantPrice = (firstOpt.isPresent()) ? firstOpt.get().getTime() : LocalDateTime.MAX;
+        final LocalDateTime firstInstantPrice = stock.getInstantPrices().
+                stream().min(comparing(InstantPrice::getTime)).
+                map(InstantPrice::getTime).orElse(LocalDateTime.MAX);
 
         Predicate<DayPrice> isAfterSinceAndBeforeInstantPrices = (DayPrice dp) -> {
-            boolean isAfterSince = (!since.isPresent()) ? true : dp.getDay().isAfter(since.get()) || dp.getDay().isEqual(since.get());
-            return isAfterSince && dp.getDay().plus(1, ChronoUnit.DAYS).atStartOfDay().isBefore(firstInstantPrice);
+            boolean isAfterSince = (!since.isPresent()) ? true :
+                    dp.getDay().isAfter(since.get()) || dp.getDay().isEqual(since.get());
+            return isAfterSince &&
+                    dp.getDay().plus(1, ChronoUnit.DAYS).atStartOfDay().isBefore(firstInstantPrice);
         };
 
         List<ChartItemDTO> dayItems = new ArrayList<>();
         stock.getDayPrices().stream().
                 filter(isAfterSinceAndBeforeInstantPrices).
-                sorted((p1, p2) -> p1.getDay().compareTo(p2.getDay())).
+                sorted(comparing(DayPrice::getDay)).
                 forEach(dp ->
-                        dayItems.add(new ChartItemDTO(dp.getDay().atStartOfDay(), dp.getMin(), dp.getMax(), average(dp.getMin(), dp.getMax()), false))
+                        dayItems.add(new ChartItemDTO.Builder().
+                                setDateTime(dp.getDay().atStartOfDay()).
+                                setMinLong(dp.getMin()).
+                                setMaxLong(dp.getMax()).
+                                setAverageLong(average(dp.getMin(), dp.getMax())).
+                                setInstantPrice(false).
+                                build())
                 );
         aggregate(dayItems, dayPoints);
 
         List<ChartItemDTO> instantItems = new ArrayList<>();
         stock.getInstantPrices().stream().
-                sorted((p1, p2) -> p1.getTime().compareTo(p2.getTime())).
+                sorted(comparing(InstantPrice::getTime)).
                 forEach(ip ->
-                        instantItems.add(new ChartItemDTO(ip.getTime(), ip.getMin(), ip.getMax(), average(ip.getMin(), ip.getMax()), true))
+                        instantItems.add(new ChartItemDTO.Builder().
+                                setDateTime(ip.getTime()).
+                                setMinLong(ip.getMin()).
+                                setMaxLong(ip.getMax()).
+                                setAverageLong(average(ip.getMin(), ip.getMax())).
+                                setInstantPrice(true).
+                                build())
                 );
         aggregate(instantItems, instantPoints);
 
@@ -103,15 +121,19 @@ public class ChartBuilder {
             double aggregatedAvgPercent = 0;
             for (int i = 0; i < avgPercents.size(); i++) {
                 double avg = avgPercents.get(i);
-                aggregatedAvgPercent += avg * stockWeights.get(i) / 100.0;
+                aggregatedAvgPercent += avg * stockWeights.get(i) / 100d;
             }
 
-            long aggregatedAvgPercentLong = Math.round(aggregatedAvgPercent * 100 * 100);
-            ChartItemDTO itemDto = new ChartItemDTO(date.atStartOfDay(), null, null, aggregatedAvgPercentLong, false);
+            long aggregatedAvgPercentLong = round(aggregatedAvgPercent * 100d * 100d);
+            ChartItemDTO itemDto = new ChartItemDTO.Builder().
+                    setDateTime(date.atStartOfDay()).
+                    setAverageLong(aggregatedAvgPercentLong).
+                    setInstantPrice(false).
+                    build();
             aggregatedItemList.add(itemDto);
         }
 
-        aggregatedItemList.sort((i1, i2) -> i1.getDateTime().compareTo(i2.getDateTime()));
+        aggregatedItemList.sort(comparing(ChartItemDTO::getDateTime));
         aggregate(aggregatedItemList, points);
 
         ChartDataDTO dto = new ChartDataDTO("aggregated", LocalDateTime.now());
@@ -130,14 +152,14 @@ public class ChartBuilder {
             AllInOneChartItemDto item = new AllInOneChartItemDto();
             item.setDateTime(date.atStartOfDay());
             for (int i = 0; i < avgs.size(); i++) {
-                double avg = (avgs.get(i) != null) ? avgs.get(i) : 0.0;
-                long avgLong = Math.round(avg * 100 * 100);
+                double avg = (avgs.get(i) != null) ? avgs.get(i) : 0d;
+                long avgLong = round(avg * 100 * 100);
                 item.addAverageLong(StocksEnum.of(stocks.get(i).getSymbol()), avgLong);
             }
             items.add(item);
         }
 
-        items.sort((i1, i2) -> i1.getDateTime().compareTo(i2.getDateTime()));
+        items.sort(comparing(AllInOneChartItemDto::getDateTime));
 
         // TODO aggregation to max points, if needed
 
@@ -183,7 +205,7 @@ public class ChartBuilder {
                 Long avg = avgPerDateList.get(i).get(date);
                 if (avg == null) avg = 0L;
                 long first = firstAverages.get(i);
-                double avgPercent = 1.0 * (avg - first) / first;
+                double avgPercent = 1d * (avg - first) / first;
                 averages.add(avgPercent);
             }
             avgPercentsPerDate.put(date, averages);
@@ -219,7 +241,7 @@ public class ChartBuilder {
     private Long average(Long l1, Long l2) {
         if (l1 == null) return l2;
         if (l2 == null) return l1;
-        return Math.round((l1 + l2) / 2.0);
+        return round((l1 + l2) / 2d);
     }
 
     private Long max(Long l1, Long l2) {
@@ -242,7 +264,7 @@ public class ChartBuilder {
         if (first.getAverageLong() != null) {
             firstAvg = first.getAverageLong().doubleValue();
         } else if (first.getMinLong() != null && first.getMaxLong() != null) {
-            firstAvg = (first.getMinLong().doubleValue() + first.getMaxLong().doubleValue()) / 2.0;
+            firstAvg = (first.getMinLong().doubleValue() + first.getMaxLong().doubleValue()) / 2d;
         } else {
             throw new RuntimeException("no first element for calculating percentages");
         }
@@ -255,11 +277,11 @@ public class ChartBuilder {
     }
 
     private long percent(double first, Long value) {
-        if (first == 0.0 || value == null || value == 0.0) {
+        if (first == 0d || value == null || value == 0d) {
             return 0;
         }
         double percent = (value.doubleValue() - first) / first;
-        long percentLong = Math.round(percent * 100 * 100);
+        long percentLong = round(percent * 100 * 100);
         return percentLong;
     }
 

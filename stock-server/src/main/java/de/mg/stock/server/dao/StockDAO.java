@@ -75,7 +75,7 @@ public class StockDAO {
 
     public Optional<Date> getLastAlertSent() {
         AlertMailStatus status = getAlertMailStatus();
-        return (status == null) ? Optional.empty() : Optional.of(status.getLastAlertSent());
+        return Optional.ofNullable(status.getLastAlertSent());
     }
 
     public void setLastAlertSent(Date date) {

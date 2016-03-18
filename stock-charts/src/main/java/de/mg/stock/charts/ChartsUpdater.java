@@ -27,12 +27,13 @@ import javafx.scene.layout.VBox;
 import javax.ws.rs.ProcessingException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 import static de.mg.stock.dto.StocksEnum.EMERGING;
 import static de.mg.stock.dto.StocksEnum.SMALL200;
 import static de.mg.stock.dto.StocksEnum.WORLD;
+import static java.time.format.DateTimeFormatter.ofPattern;
 
 class ChartsUpdater {
 
@@ -47,7 +48,7 @@ class ChartsUpdater {
     // same default as in fxml file:
     private int points = 100;
 
-    private LocalDateTime lastChartData = null;
+    private final LastChartData lastChartData = new LastChartData();
 
     private ChartsUpdater() {
     }
@@ -59,31 +60,32 @@ class ChartsUpdater {
     }
 
     void reinitializeCharts() {
-        if (showType != null) {
-            switch (showType) {
-                case AGGREGATED:
-                    drawCharts("aggregated");
-                    break;
-                case ALL:
-                    drawCharts(WORLD.getName(), EMERGING.getName(), SMALL200.getName());
-                    break;
-                case WORLD:
-                    drawCharts(WORLD.getName());
-                    break;
-                case EMERGING:
-                    drawCharts(EMERGING.getName());
-                    break;
-                case SMALL200:
-                    drawCharts(SMALL200.getName());
-                    break;
-                case ALL_IN_ONE:
-                    drawCharts("all in one");
-                    break;
-                default:
-                    throw new RuntimeException("wrong type");
-            }
-            redrawChart();
+        if (showType == null) {
+            return;
         }
+        switch (showType) {
+            case AGGREGATED:
+                drawCharts("aggregated");
+                break;
+            case ALL:
+                drawCharts(WORLD.getName(), EMERGING.getName(), SMALL200.getName());
+                break;
+            case WORLD:
+                drawCharts(WORLD.getName());
+                break;
+            case EMERGING:
+                drawCharts(EMERGING.getName());
+                break;
+            case SMALL200:
+                drawCharts(SMALL200.getName());
+                break;
+            case ALL_IN_ONE:
+                drawCharts("all in one");
+                break;
+            default:
+                throw new RuntimeException("wrong type");
+        }
+        redrawChart();
     }
 
     private void drawCharts(String... titles) {
@@ -93,41 +95,40 @@ class ChartsUpdater {
     }
 
     void redrawChart() {
-        if (showType != null) {
-            switch (showType) {
-                case AGGREGATED: {
-                    if (since != null) {
-                        updateChart(load(null), 0);
-                    }
-                    break;
-                }
-                case ALL:
-                    updateChart(load(WORLD), 0);
-                    updateChart(load(EMERGING), 1);
-                    updateChart(load(SMALL200), 2);
-                    break;
-                case WORLD:
-                    updateChart(load(WORLD), 0);
-                    break;
-                case EMERGING:
-                    updateChart(load(EMERGING), 0);
-                    break;
-                case SMALL200:
-                    updateChart(load(SMALL200), 0);
-                    break;
-                case ALL_IN_ONE:
-                    updateAllInOne();
-                    break;
-                default:
-                    throw new RuntimeException("wrong type");
+        if (showType == null) {
+            return;
+        }
+        switch (showType) {
+            case AGGREGATED: {
+                if (since != null)
+                    updateChart(load(null), 0);
+                break;
             }
+            case ALL:
+                updateChart(load(WORLD), 0);
+                updateChart(load(EMERGING), 1);
+                updateChart(load(SMALL200), 2);
+                break;
+            case WORLD:
+                updateChart(load(WORLD), 0);
+                break;
+            case EMERGING:
+                updateChart(load(EMERGING), 0);
+                break;
+            case SMALL200:
+                updateChart(load(SMALL200), 0);
+                break;
+            case ALL_IN_ONE:
+                updateAllInOne();
+                break;
+            default:
+                throw new RuntimeException("wrong type");
         }
     }
 
     void updateStatus(LocalDateTime lastChartUpdate) {
         long secAgo = lastChartUpdate.until(LocalDateTime.now(), ChronoUnit.SECONDS);
-        String lastUpdateStr = (lastChartData != null) ? lastChartData.format(DateTimeFormatter.ofPattern("dd.MM. hh:mm")) : "n/a";
-        statusLeft.setText(String.format("loaded %ds ago, last data from %s", secAgo, lastUpdateStr));
+        statusLeft.setText(String.format("loaded %ds ago, last data from %s", secAgo, lastChartData.get()));
     }
 
     private ChartDataDTO load(StocksEnum stock) {
@@ -169,10 +170,10 @@ class ChartsUpdater {
 
         serverData.getItems().stream().forEach(data -> {
 
-            updateLastChartData(data.getDateTime());
+            lastChartData.update(data.getDateTime());
 
             String pattern = (data.isInstantPrice()) ? "dd. HH:mm" : "dd.MM.yy";
-            String label = data.getDateTime().format(DateTimeFormatter.ofPattern(pattern));
+            String label = data.getDateTime().format(ofPattern(pattern));
 
             if (data.getMax() != null)
                 seriesMax.getData().add(new XYChart.Data(label, data.getMax()));
@@ -181,11 +182,6 @@ class ChartsUpdater {
             if (data.getAverage() != null)
                 seriesAverage.getData().add(new XYChart.Data(label, data.getAverage()));
         });
-    }
-
-    private void updateLastChartData(LocalDateTime dataTime) {
-        if (lastChartData == null || dataTime.isAfter(lastChartData))
-            lastChartData = dataTime;
     }
 
     private void updateAllInOne() {
@@ -206,7 +202,7 @@ class ChartsUpdater {
         dto.getItems().stream().forEach(data -> {
 
             final String pattern = "dd.MM.yy";
-            String label = data.getDateTime().format(DateTimeFormatter.ofPattern(pattern));
+            String label = data.getDateTime().format(ofPattern(pattern));
 
             if (data.getAverage(WORLD) != null)
                 seriesWorld.getData().add(new XYChart.Data(label, data.getAverage(WORLD)));
@@ -215,7 +211,7 @@ class ChartsUpdater {
             if (data.getAverage(SMALL200) != null)
                 seriesSmall200.getData().add(new XYChart.Data(label, data.getAverage(SMALL200)));
         });
-        updateLastChartData(dto.lastDate());
+        lastChartData.update(dto.lastDate());
     }
 
 
@@ -240,6 +236,19 @@ class ChartsUpdater {
             this.points = Integer.valueOf(pointsStr);
         } catch (NumberFormatException e) {
             // ignore
+        }
+    }
+
+    private class LastChartData {
+        private Optional<LocalDateTime> time = Optional.empty();
+
+        void update(LocalDateTime dataTime) {
+            if (!time.isPresent() || dataTime.isAfter(time.get()))
+                time = Optional.of(dataTime);
+        }
+
+        String get() {
+            return time.map(t -> t.format(ofPattern("dd.MM. hh:mm"))).orElse("n/a");
         }
     }
 }
