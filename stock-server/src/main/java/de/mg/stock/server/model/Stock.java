@@ -29,8 +29,11 @@ import javax.persistence.OneToMany;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @NamedQueries({
         @NamedQuery(name = "findStockBySymbol",
@@ -80,6 +83,22 @@ public class Stock extends AbstractEntity {
 
     public List<InstantPrice> getInstantPrices() {
         return instantPrices;
+    }
+
+    /**
+     * @return list of all day prices filled up with instant prices, in case of missing day prices
+     */
+    public Set<SimpleDayPrice> getAllPricesDaily() {
+
+        Set<SimpleDayPrice> result =
+                Stream.concat(getDayPrices().stream().map(dp -> new SimpleDayPrice(dp.getDay(), dp.getAverage())),
+                        getInstantPrices().stream().map(ip -> new SimpleDayPrice(ip.getTime().toLocalDate(), ip.getAverage()))).
+                        collect(Collectors.groupingBy(SimpleDayPrice::getDate, Collectors.toSet())).
+                        entrySet().stream().
+                        map(e -> new SimpleDayPrice(e.getKey(),
+                                (long) e.getValue().stream().mapToLong(SimpleDayPrice::getAverage).average().getAsDouble())).
+                        collect(Collectors.toSet());
+        return result;
     }
 
     public void updateDayPrices(List<DayPrice> fetchedDayPrices) {
@@ -156,5 +175,6 @@ public class Stock extends AbstractEntity {
     public String toString() {
         return String.format("%s: %d day prices and %d instant prices", symbol, dayPrices.size(), instantPrices.size());
     }
+
 }
 

@@ -55,6 +55,12 @@ public class InstantPrice extends AbstractPrice {
     public InstantPrice() {
     }
 
+    public InstantPrice(LocalDateTime time, long min, long max) {
+        this.time = toDate(time);
+        this.ask = min;
+        this.bid = max;
+    }
+
     public LocalDateTime getTime() {
         return toLocalDateTime(time);
     }
@@ -105,6 +111,12 @@ public class InstantPrice extends AbstractPrice {
         if (ask == null) return bid;
         if (bid == null) return ask;
         return (ask.longValue() > bid.longValue()) ? ask : bid;
+    }
+
+    public Long getAverage() {
+        if (getMax() == null) return getMin();
+        if (getMin() == null) return getMax();
+        return (getMin() + getMax()) / 2;
     }
 
     public boolean hasSamePrices(InstantPrice that) {
@@ -160,4 +172,6 @@ public class InstantPrice extends AbstractPrice {
                 ", dayMax=" + dayMax +
                 '}';
     }
+
+
 }

@@ -20,6 +20,8 @@ import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 import java.util.logging.Logger;
 
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+
 @Singleton
 public class Config {
 
@@ -57,6 +59,10 @@ public class Config {
 
     public String getAlertMailTo() {
         return alertMailTo;
+    }
+
+    public boolean isAlertMailInitialized() {
+        return !isEmpty(getSmtpHost()) && !isEmpty(getAlertMailFrom()) && !isEmpty(getAlertMailTo());
     }
 
     @Override

@@ -99,4 +99,8 @@ public final class DateConverters {
             throw new RuntimeException(e);
         }
     }
+
+    public static boolean isSameDay(Date d1, Date d2) {
+        return d1 != null && d2 != null && d1.getYear() == d2.getYear() && d1.getMonth() == d2.getMonth() && d1.getDay() == d2.getDay();
+    }
 }

@@ -16,25 +16,31 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.apache.commons.lang3.StringUtils.isEmpty;
-
 @Singleton
-public class AlertMail {
+public class AlertMailSender {
 
-    private static Logger logger = Logger.getLogger(AlertMail.class.getName());
+    private static Logger logger = Logger.getLogger(AlertMailSender.class.getName());
 
     @Inject
     private Config config;
 
-    public void send(Map<StocksEnum, Integer> changePercent) {
-
-        if (isEmpty(config.getSmtpHost()) || isEmpty(config.getAlertMailFrom()) || isEmpty(config.getAlertMailTo())) {
-            return;
-        }
+    public void send(Map<StocksEnum, Long> changePercent) {
 
         String msg = "";
         for (StocksEnum stock : changePercent.keySet()) {
             msg += stock.getName() + " --> " + changePercent.get(stock) + "%\n";
+        }
+        send(msg);
+    }
+
+    public void sendStartupMail() {
+        send("alert mail sending initialized");
+    }
+
+    private void send(String msg) {
+
+        if (!config.isAlertMailInitialized()) {
+            return;
         }
 
         Properties properties = new Properties();
@@ -51,6 +57,5 @@ public class AlertMail {
         } catch (MessagingException e) {
             logger.log(Level.SEVERE, "mail sending problem", e);
         }
-
     }
 }
