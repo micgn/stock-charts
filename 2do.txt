@@ -1,5 +1,1 @@
-mark start of instant prices
-
-log debug received instant data
-
 start client with default settings
