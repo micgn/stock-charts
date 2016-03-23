@@ -18,7 +18,6 @@ package de.mg.stock.server.logic;
 
 import de.mg.stock.dto.AllInOneChartDto;
 import de.mg.stock.dto.ChartDataDTO;
-import de.mg.stock.dto.ChartItemDTO;
 import de.mg.stock.dto.StocksEnum;
 import de.mg.stock.server.Config;
 import de.mg.stock.server.dao.StockDAO;
@@ -37,13 +36,13 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+import static java.time.format.DateTimeFormatter.ofPattern;
 import static javax.ejb.TransactionAttributeType.REQUIRED;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
@@ -93,9 +92,7 @@ public class StockFacade {
 
         ChartDataDTO data = chartBuilder.createOne(stock, Integer.valueOf(pointsStr), toDate(dateStr), Boolean.valueOf(percentagesStr));
 
-        for (ChartItemDTO item : data.getItems()) {
-            if (!item.isValid()) logger.warning("invalid: " + item);
-        }
+        data.getItems().stream().filter(item -> !item.isValid()).forEach(item -> logger.warning("invalid: " + item));
 
         return Response.status(Response.Status.OK).entity(data).build();
     }
@@ -125,9 +122,9 @@ public class StockFacade {
     private Optional<LocalDate> toDate(String dateStr) {
         LocalDate since = null;
         if (!isEmpty(dateStr)) {
-            since = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("ddMMyyyy", Locale.ENGLISH));
+            since = LocalDate.parse(dateStr, ofPattern("ddMMyyyy", Locale.ENGLISH));
         }
-        return (since == null) ? Optional.empty() : Optional.of(since);
+        return Optional.ofNullable(since);
     }
 
     @GET
@@ -160,7 +157,7 @@ public class StockFacade {
             logger.warning("no write access!");
             
             return Response.status(Response.Status.FORBIDDEN).
-                    entity("server missing -D" + Config.SWITCH_WRITEACCESS).build();
+                    entity("server missing -D" + Config.SWITCH_WRITE_ACCESS).build();
         }
 
         if (stocks == null || stocks.isEmpty()) {

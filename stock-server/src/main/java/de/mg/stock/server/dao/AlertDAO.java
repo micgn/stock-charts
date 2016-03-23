@@ -34,43 +34,29 @@ import java.util.logging.Logger;
 import static de.mg.stock.server.util.DateConverters.toDate;
 
 @Singleton
-public class StockDAO {
+public class AlertDAO {
 
-    private static Logger logger = Logger.getLogger(StockDAO.class.getName());
+    private static Logger logger = Logger.getLogger(AlertDAO.class.getName());
 
     @PersistenceContext(name = "stock")
     private EntityManager em;
 
-    public Stock findStock(String symbol) {
-        try {
-            return (Stock) em.createNamedQuery("findStockBySymbol").
-                    setParameter("symbol", symbol).getSingleResult();
-        } catch (NoResultException e) {
-            return null;
+
+    public Optional<Date> getLastAlertSent() {
+        AlertMailStatus status = getAlertMailStatus();
+        return Optional.ofNullable(status.getLastAlertSent());
+    }
+
+    public void setLastAlertSent(Date date) {
+        AlertMailStatus status = getAlertMailStatus();
+        if (status == null) {
+            status = new AlertMailStatus();
+            status = em.merge(status);
         }
+        status.setLastAlertSent(date);
     }
 
-    public Stock findOrCreateStock(String symbol) {
-        Stock stock = findStock(symbol);
-        if (stock == null) {
-            stock = new Stock(symbol);
-            stock = em.merge(stock);
-        }
-        return stock;
+    private AlertMailStatus getAlertMailStatus() {
+        return (AlertMailStatus) em.createQuery("from " + AlertMailStatus.class.getSimpleName()).getSingleResult();
     }
-
-    public List<Stock> findAllStocks() {
-        return em.createNamedQuery("findAllStocks").getResultList();
-    }
-
-    public void deleteOldInstantData() {
-
-        LocalDateTime keepSinceDate = LocalDateTime.now().minus(3, ChronoUnit.DAYS);
-        int deleted = em.createNamedQuery("deleteOldInstantPrices").
-                setParameter("keepSinceDate", toDate(keepSinceDate), TemporalType.TIMESTAMP).
-                executeUpdate();
-
-        logger.info("deleted " + deleted + " old instant prices");
-    }
-
 }
