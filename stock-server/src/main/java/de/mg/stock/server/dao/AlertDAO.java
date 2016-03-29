@@ -57,6 +57,10 @@ public class AlertDAO {
     }
 
     private AlertMailStatus getAlertMailStatus() {
-        return (AlertMailStatus) em.createQuery("from " + AlertMailStatus.class.getSimpleName()).getSingleResult();
+        try {
+            return (AlertMailStatus) em.createQuery("from " + AlertMailStatus.class.getSimpleName()).getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
     }
 }
