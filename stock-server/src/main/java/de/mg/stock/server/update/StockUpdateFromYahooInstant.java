@@ -95,6 +95,8 @@ public class StockUpdateFromYahooInstant {
             return null;
         }
 
+        logger.info("retrieved: " + response + "\nparsed: " + result.toString());
+
         return result;
     }
 
