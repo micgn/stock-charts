@@ -22,6 +22,7 @@ import de.mg.stock.server.util.HttpUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.StringTokenizer;
@@ -95,7 +96,14 @@ public class StockUpdateFromYahooInstant {
             return null;
         }
 
-        logger.info("retrieved: " + response + "\nparsed: " + result.toString());
+        // since at times we receive instant data from long ago:
+        if (result.getTime().isBefore(LocalDate.now().atStartOfDay())) {
+            return null;
+        }
+
+        // only for debugging
+        if (false)
+            logger.info("retrieved: " + response + "\nparsed: " + result.toString());
 
         return result;
     }
