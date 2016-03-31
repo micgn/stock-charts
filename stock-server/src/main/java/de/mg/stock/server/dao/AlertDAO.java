@@ -44,7 +44,7 @@ public class AlertDAO {
 
     public Optional<Date> getLastAlertSent() {
         AlertMailStatus status = getAlertMailStatus();
-        return Optional.ofNullable(status.getLastAlertSent());
+        return (status == null) ? Optional.empty() : Optional.ofNullable(status.getLastAlertSent());
     }
 
     public void setLastAlertSent(Date date) {
