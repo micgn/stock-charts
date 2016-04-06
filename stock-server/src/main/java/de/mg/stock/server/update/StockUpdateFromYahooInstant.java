@@ -22,7 +22,6 @@ import de.mg.stock.server.util.HttpUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.StringTokenizer;
@@ -93,11 +92,6 @@ public class StockUpdateFromYahooInstant {
 
         if (result.getAsk() == null && result.getBid() == null && result.getDayMax() == null && result.getDayMin() == null) {
             logger.info("no meaningful values for " + symbol + ": " + response);
-            return null;
-        }
-
-        // since at times we receive instant data from long ago:
-        if (result.getTime().isBefore(LocalDate.now().atStartOfDay())) {
             return null;
         }
 

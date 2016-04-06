@@ -19,13 +19,7 @@ package de.mg.stock.server.model;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +28,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.Comparator.comparing;
 
 @NamedQueries({
         @NamedQuery(name = "findStockBySymbol",
@@ -144,11 +140,14 @@ public class Stock extends AbstractEntity {
             instantPrices.add(price);
             price.setStock(this);
 
-        } else if (!instantPrices.stream().anyMatch(p -> p.getTime().equals(price.getTime()))) {
+        } else if (instantPrices.stream().noneMatch(p -> p.getTime().equals(price.getTime()))) {
 
-            instantPrices.sort((o1, o2) -> o1.getTime().compareTo(o2.getTime()));
-            InstantPrice prev = instantPrices.get(instantPrices.size() - 1);
-            if (!prev.hasSamePrices(price)) {
+            instantPrices.sort(comparing(InstantPrice::getTime));
+            InstantPrice last = instantPrices.get(instantPrices.size() - 1);
+
+            // only add instant price if the price changed and the time is after the already fetched time
+            // (the later is due to a bug when fetching data from yahoo)
+            if (!last.hasSamePrices(price) && last.getTime().isBefore(price.getTime())) {
                 instantPrices.add(price);
                 price.setStock(this);
             }
