@@ -31,7 +31,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -39,9 +42,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static java.time.LocalDate.of;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -50,7 +55,7 @@ import static org.mockito.Mockito.when;
 public class AlertMailTaskTest {
 
     @InjectMocks
-    AlertMailTask sut;
+    private AlertMailTask sut;
 
     @Mock
     private StockDAO stockDAO;
@@ -84,10 +89,12 @@ public class AlertMailTaskTest {
     @Test
     public void testNoRelevantChanges() {
 
-        prices.add(new SimpleDayPrice(of(2016, 3, 22), 105l));
-        prices.add(new SimpleDayPrice(of(2016, 3, 21), 100l));
-        prices.add(new SimpleDayPrice(of(2016, 3, 20), 100l));
-        prices.add(new SimpleDayPrice(of(2016, 3, 19), 100l));
+        LocalDate today = LocalDate.now();
+
+        prices.add(new SimpleDayPrice(today, 105l));
+        prices.add(new SimpleDayPrice(today.minus(1, ChronoUnit.DAYS), 100l));
+        prices.add(new SimpleDayPrice(today.minus(2, ChronoUnit.DAYS), 100l));
+        prices.add(new SimpleDayPrice(today.minus(3, ChronoUnit.DAYS), 100l));
 
         sut.checkForAlert();
 
@@ -97,15 +104,17 @@ public class AlertMailTaskTest {
     @Test
     public void testRelevantChanges() {
 
-        prices.add(new SimpleDayPrice(of(2016, 3, 22), 100l));
-        prices.add(new SimpleDayPrice(of(2016, 3, 21), 50l));
-        prices.add(new SimpleDayPrice(of(2016, 3, 20), 100l));
-        prices.add(new SimpleDayPrice(of(2016, 3, 19), 100l));
+        LocalDate today = LocalDate.now();
+
+        prices.add(new SimpleDayPrice(today, 100l));
+        prices.add(new SimpleDayPrice(today.minus(1, ChronoUnit.DAYS), 50l));
+        prices.add(new SimpleDayPrice(today.minus(2, ChronoUnit.DAYS), 80l));
+        prices.add(new SimpleDayPrice(today.minus(3, ChronoUnit.DAYS), 100l));
 
         sut.checkForAlert();
 
-        verify(alertMailSender).send(changePercent.capture());
+        verify(alertMailSender).send(changePercent.capture(), anyString());
         assertThat(changePercent.getValue()).hasSize(1);
-        assertThat(changePercent.getValue().get(StocksEnum.WORLD)).isEqualTo(-50l);
+        assertThat(changePercent.getValue().get(StocksEnum.WORLD)).isEqualTo(50l);
     }
 }

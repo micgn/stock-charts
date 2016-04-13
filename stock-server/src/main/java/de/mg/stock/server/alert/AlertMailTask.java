@@ -19,8 +19,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static de.mg.stock.server.util.DateConverters.isSameDay;
+import static de.mg.stock.server.util.DateConverters.toDate;
+import static java.lang.Math.abs;
+import static java.lang.Math.round;
 import static java.util.Comparator.comparing;
 import static javax.ejb.TransactionAttributeType.REQUIRED;
 
@@ -44,23 +48,29 @@ public class AlertMailTask {
     @Schedule(minute = "10, 30, 50", persistent = false)
     public void checkForAlert() {
 
-        final Date today = new Date();
+        final Date today = toDate(LocalDate.now());
 
         Optional<Date> lastAlert = alertDAO.getLastAlertSent();
         if (lastAlert.isPresent() && isSameDay(lastAlert.get(), today))
             return;
 
-        Map<StocksEnum, Long> alerts = calculateChanges();
+        Map<StocksEnum, Long> alerts = calculateChanges(DAYS_BACK, PERCENTAGE_THRESHOLD);
         if (!alerts.isEmpty()) {
-            alertMailSender.send(alerts);
+            alertMailSender.send(alerts, "Stock Alert");
             alertDAO.setLastAlertSent(today);
         }
     }
 
-    private Map<StocksEnum, Long> calculateChanges() {
+    @Schedule(dayOfWeek = "5", persistent = false)
+    public void sendWeeklyMail() {
+        Map<StocksEnum, Long> changes = calculateChanges(7, 0);
+        alertMailSender.send(changes, "Weekly Stock Changes");
+    }
+
+    private Map<StocksEnum, Long> calculateChanges(int daysBack, long thresholdPercentage) {
 
         final LocalDateTime thisMorning = LocalDate.now().atStartOfDay();
-        final LocalDate startDay = LocalDate.now().minus(DAYS_BACK, ChronoUnit.DAYS);
+        final LocalDate startDay = LocalDate.now().minus(daysBack, ChronoUnit.DAYS);
         final Predicate<SimpleDayPrice> withinDaysBack = d ->
                 d.getDate().isEqual(startDay) ||
                         (d.getDate().isAfter(startDay) && d.getDate().isBefore(thisMorning.toLocalDate()));
@@ -76,19 +86,27 @@ public class AlertMailTask {
                     lastInstantPrice.get().getTime().isAfter(thisMorning) &&
                     (lastAvg = lastInstantPrice.get().getAverage()) != null) {
 
-                Optional<Long> maxPercentage = stock.getAllPricesDaily().stream().
-                        filter(withinDaysBack).
-                        map(SimpleDayPrice::getAverage).
-                        map(avg -> 1d * (avg - lastAvg) / lastAvg).
-                        map(avg -> Math.round(100 * avg)).
-                        filter(avg -> Math.abs(avg) >= PERCENTAGE_THRESHOLD).
-                        max(Long::compareTo);
+                Long maxPercentage = minMaxStream(stock, lastAvg, thresholdPercentage, withinDaysBack).
+                        max(Long::compareTo).orElse(0L);
+                Long minPercentage = minMaxStream(stock, lastAvg, thresholdPercentage, withinDaysBack).
+                        min(Long::compareTo).orElse(0L);
+                Long change = abs(maxPercentage) > abs(minPercentage) ? maxPercentage : minPercentage;
 
-                if (maxPercentage.isPresent())
-                    result.put(StocksEnum.of(stock.getSymbol()), maxPercentage.get());
+                if (change != 0) result.put(StocksEnum.of(stock.getSymbol()), change);
             }
         }
         return result;
+    }
+
+    private Stream<Long> minMaxStream(Stock stock, Long lastAvg, long thresholdPercentage,
+                                      Predicate<SimpleDayPrice> withinDaysBack) {
+
+        return stock.getAllPricesDaily().stream().
+                filter(withinDaysBack).
+                map(SimpleDayPrice::getAverage).
+                map(avg -> 1d * (lastAvg - avg) / lastAvg).
+                map(avgPercent -> round(100 * avgPercent)).
+                filter(avg -> abs(avg) >= thresholdPercentage);
     }
 
 }

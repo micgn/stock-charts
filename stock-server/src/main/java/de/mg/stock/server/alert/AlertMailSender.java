@@ -24,24 +24,26 @@ public class AlertMailSender {
     @Inject
     private Config config;
 
-    public void send(Map<StocksEnum, Long> changePercent) {
+    public void send(Map<StocksEnum, Long> changePercent, String subject) {
 
         String msg = "";
         for (StocksEnum stock : changePercent.keySet()) {
             msg += stock.getName() + " --> " + changePercent.get(stock) + "%\n";
         }
-        send(msg);
+        send(msg, subject);
     }
 
     public void sendStartupMail() {
-        send("alert mail sending initialized");
+        send("alert mail sending initialized", "Initialized...");
     }
 
-    private void send(String msg) {
+    private void send(String msg, String subject) {
 
         if (!config.isAlertMailInitialized()) {
             return;
         }
+
+        logger.info("going to send mail:\n" + msg);
 
         Properties properties = new Properties();
         properties.setProperty("mail.smtp.host", config.getSmtpHost());
@@ -50,10 +52,9 @@ public class AlertMailSender {
             MimeMessage message = new MimeMessage(session);
             message.setFrom(new InternetAddress(config.getAlertMailFrom()));
             message.addRecipient(Message.RecipientType.TO, new InternetAddress(config.getAlertMailTo()));
-            message.setSubject("Stock Alert");
+            message.setSubject(subject);
             message.setText(msg);
             Transport.send(message);
-            logger.info("sent stock alert:\n" + msg);
         } catch (MessagingException e) {
             logger.log(Level.SEVERE, "mail sending problem", e);
         }
