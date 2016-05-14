@@ -26,20 +26,20 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
 public class Config {
 
     public static final String SWITCH_WRITE_ACCESS = "writeAccessEnabled";
-    public static final String MAIL_HOST = "mailHost";
-    public static final String MAIL_FROM = "mailFrom";
+    public static final String GMAIL_USER = "gmailUser";
+    public static final String GMAIL_PW = "gmailPw";
     public static final String MAIL_TO = "mailTo";
 
     private static Logger logger = Logger.getLogger(Config.class.getName());
 
     private boolean writeAccessEnabled = false;
-    private String smtpHost, alertMailFrom, alertMailTo;
+    private String gmailUser, gmailPw, alertMailTo;
 
     @PostConstruct
     void initialize() {
         writeAccessEnabled = System.getProperty(SWITCH_WRITE_ACCESS) != null;
-        smtpHost = System.getProperty(MAIL_HOST);
-        alertMailFrom = System.getProperty(MAIL_FROM);
+        gmailUser = System.getProperty(GMAIL_USER);
+        gmailPw = System.getProperty(GMAIL_PW);
         alertMailTo = System.getProperty(MAIL_TO);
 
         logger.info("Configuration initialized:\n" + this);
@@ -49,12 +49,12 @@ public class Config {
         return writeAccessEnabled;
     }
 
-    public String getSmtpHost() {
-        return smtpHost;
+    public String getGmailUser() {
+        return gmailUser;
     }
 
-    public String getAlertMailFrom() {
-        return alertMailFrom;
+    public String getGmailPw() {
+        return gmailPw;
     }
 
     public String getAlertMailTo() {
@@ -62,15 +62,15 @@ public class Config {
     }
 
     public boolean isAlertMailInitialized() {
-        return !isEmpty(getSmtpHost()) && !isEmpty(getAlertMailFrom()) && !isEmpty(getAlertMailTo());
+        return !isEmpty(getGmailUser()) && !isEmpty(getGmailPw()) && !isEmpty(getAlertMailTo());
     }
 
     @Override
     public String toString() {
         return "Config{" +
                 "writeAccessEnabled=" + writeAccessEnabled +
-                ", smtpHost='" + smtpHost + '\'' +
-                ", alertMailFrom='" + alertMailFrom + '\'' +
+                ", gmailUser='" + gmailUser + '\'' +
+                ", gmailPw='" + gmailPw + '\'' +
                 ", alertMailTo='" + alertMailTo + '\'' +
                 '}';
     }
