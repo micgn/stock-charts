@@ -18,6 +18,7 @@ package de.mg.stock.server.update;
 
 import de.mg.stock.server.model.InstantPrice;
 import de.mg.stock.server.util.DateConverters;
+import de.mg.stock.server.util.DateTimeProvider;
 import de.mg.stock.server.util.HttpUtil;
 
 import javax.inject.Inject;
@@ -38,9 +39,12 @@ public class StockUpdateFromYahooInstant {
     @Inject
     private HttpUtil httpUtil;
 
+    @Inject
+    private DateTimeProvider dateTimeProvider;
+
     public InstantPrice get(String symbol) {
 
-        LocalDateTime fetchTime = LocalDateTime.now();
+        LocalDateTime fetchTime = dateTimeProvider.now();
 
         /*
             b2=ask (real time)

@@ -19,12 +19,7 @@ package de.mg.stock.server.model;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.persistence.UniqueConstraint;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Date;
 
@@ -114,9 +109,23 @@ public class InstantPrice extends AbstractPrice {
     }
 
     public Long getAverage() {
-        if (getMax() == null) return getMin();
-        if (getMin() == null) return getMax();
-        return (getMin() + getMax()) / 2;
+        Long result;
+        if (getMax() == null)
+            result = getMin();
+        else if (getMin() == null)
+            result = getMax();
+        else
+            result = (getMin() + getMax()) / 2;
+
+        if (result == null)
+            if (dayMax == null)
+                result = dayMin;
+            else if (dayMin == null)
+                result = dayMax;
+            else
+                result = (getDayMin() + getDayMax()) / 2;
+
+        return result;
     }
 
     public boolean hasSamePrices(InstantPrice that) {

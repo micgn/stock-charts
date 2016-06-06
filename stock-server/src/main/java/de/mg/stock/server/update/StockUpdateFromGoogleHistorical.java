@@ -17,17 +17,14 @@
 package de.mg.stock.server.update;
 
 import de.mg.stock.server.model.DayPrice;
+import de.mg.stock.server.util.DateTimeProvider;
 import de.mg.stock.server.util.HttpUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.logging.Logger;
 
 import static de.mg.stock.server.util.DateConverters.toLocalDate;
@@ -42,12 +39,15 @@ public class StockUpdateFromGoogleHistorical implements StockUpdaterHistorical {
     @Inject
     private HttpUtil httpUtil;
 
+    @Inject
+    private DateTimeProvider dateTimeProvider;
+
     @Override
     public List<DayPrice> get(String symbol) {
 
         String shortSymbol = symbol.substring(0, symbol.lastIndexOf('.'));
 
-        LocalDateTime fetchTime = LocalDateTime.now();
+        LocalDateTime fetchTime = dateTimeProvider.now();
 
         String response = httpUtil.get("http://www.google.com/finance/historical?output=csv&startdate=Jan+1%2C+2000&q=" + shortSymbol);
         if (isEmpty(response)) {

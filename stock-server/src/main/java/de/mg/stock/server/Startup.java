@@ -17,6 +17,7 @@
 package de.mg.stock.server;
 
 import de.mg.stock.server.alert.AlertMailSender;
+import de.mg.stock.server.alert.AlertMailTask;
 import de.mg.stock.server.dao.StockDAO;
 import de.mg.stock.server.logic.StockFacade;
 import de.mg.stock.server.update.StockUpdateTasks;
@@ -42,12 +43,16 @@ public class Startup {
     @Inject
     private AlertMailSender alertMailSender;
 
+    @Inject
+    private AlertMailTask alertMailTask;
+
     @PostConstruct
     public void atStartup() {
         logger.info("found: " + StockFacade.stockStats(stockDAO.findAllStocks()));
         stockUpdateTasks.updateAsync();
 
-        alertMailSender.sendStartupMail();
+        //alertMailSender.sendStartupMail();
+        alertMailTask.sendWeeklyMail();
     }
 
 }

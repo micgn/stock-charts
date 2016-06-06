@@ -16,26 +16,18 @@
 
 package de.mg.stock.server.logic;
 
-import de.mg.stock.dto.AllInOneChartDto;
-import de.mg.stock.dto.AllInOneChartItemDto;
-import de.mg.stock.dto.ChartDataDTO;
-import de.mg.stock.dto.ChartItemDTO;
-import de.mg.stock.dto.StocksEnum;
+import de.mg.stock.dto.*;
 import de.mg.stock.server.model.DayPrice;
 import de.mg.stock.server.model.InstantPrice;
 import de.mg.stock.server.model.Stock;
+import de.mg.stock.server.util.DateTimeProvider;
 
 import javax.ejb.Singleton;
+import javax.inject.Inject;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static java.lang.Math.round;
@@ -44,9 +36,12 @@ import static java.util.Comparator.comparing;
 @Singleton
 public class ChartBuilder {
 
+    @Inject
+    private DateTimeProvider dateTimeProvider;
+
     public ChartDataDTO createOne(Stock stock, int points, Optional<LocalDate> since, boolean percentages) {
 
-        ChartDataDTO dto = new ChartDataDTO(stock.getName(), LocalDateTime.now());
+        ChartDataDTO dto = new ChartDataDTO(stock.getName(), dateTimeProvider.now());
 
         int dayPoints, instantPoints;
         if (stock.getInstantPrices().size() > 0) {
@@ -136,7 +131,7 @@ public class ChartBuilder {
         aggregatedItemList.sort(comparing(ChartItemDTO::getDateTime));
         aggregate(aggregatedItemList, points);
 
-        ChartDataDTO dto = new ChartDataDTO("aggregated", LocalDateTime.now());
+        ChartDataDTO dto = new ChartDataDTO("aggregated", dateTimeProvider.now());
         dto.getItems().addAll(aggregatedItemList);
         return dto;
     }

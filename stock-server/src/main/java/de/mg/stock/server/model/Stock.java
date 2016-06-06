@@ -86,14 +86,20 @@ public class Stock extends AbstractEntity {
      */
     public Set<SimpleDayPrice> getAllPricesDaily() {
 
-        Set<SimpleDayPrice> result =
-                Stream.concat(getDayPrices().stream().map(dp -> new SimpleDayPrice(dp.getDay(), dp.getAverage())),
-                        getInstantPrices().stream().map(ip -> new SimpleDayPrice(ip.getTime().toLocalDate(), ip.getAverage()))).
-                        collect(Collectors.groupingBy(SimpleDayPrice::getDate, Collectors.toSet())).
-                        entrySet().stream().
-                        map(e -> new SimpleDayPrice(e.getKey(),
-                                (long) e.getValue().stream().mapToLong(SimpleDayPrice::getAverage).average().getAsDouble())).
-                        collect(Collectors.toSet());
+        getInstantPrices().stream().forEach(ip -> logger.info(ip.toString()));
+
+        List<SimpleDayPrice> prices = Stream.concat(
+                getDayPrices().stream().map(dp -> new SimpleDayPrice(dp.getDay(), dp.getAverage())),
+                getInstantPrices().stream().map(ip -> new SimpleDayPrice(ip.getTime().toLocalDate(), ip.getAverage()))).
+                collect(Collectors.toList());
+
+        Set<SimpleDayPrice> result = prices.stream().
+                collect(Collectors.groupingBy(SimpleDayPrice::getDate, Collectors.toSet())).
+                entrySet().stream().
+                map(e -> new SimpleDayPrice(e.getKey(),
+                        (long) e.getValue().stream().mapToLong(SimpleDayPrice::getAverage).average().getAsDouble())).
+                collect(Collectors.toSet());
+
         return result;
     }
 
@@ -124,12 +130,12 @@ public class Stock extends AbstractEntity {
         }
     }
 
-    private boolean samePrices(DayPrice p1, DayPrice p2) {
+    private static boolean samePrices(DayPrice p1, DayPrice p2) {
         if (p1 == null) return p2 == null;
         return samePrices(p1.getMax(), p2.getMax()) && samePrices(p1.getMin(), p2.getMin());
     }
 
-    private boolean samePrices(Long l1, Long l2) {
+    private static boolean samePrices(Long l1, Long l2) {
         if (l1 == null) return l2 == null;
         return l1.equals(l2);
     }
@@ -142,6 +148,7 @@ public class Stock extends AbstractEntity {
 
         } else if (instantPrices.stream().noneMatch(p -> p.getTime().equals(price.getTime()))) {
 
+            // TODO remove sorting side effect
             instantPrices.sort(comparing(InstantPrice::getTime));
             InstantPrice last = instantPrices.get(instantPrices.size() - 1);
 

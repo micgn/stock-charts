@@ -16,19 +16,28 @@
 package de.mg.stock.server.logic;
 
 import de.mg.stock.dto.ChartDataDTO;
-import de.mg.stock.server.logic.ChartBuilder;
 import de.mg.stock.server.model.DayPrice;
 import de.mg.stock.server.model.Stock;
+import de.mg.stock.server.util.DateTimeProvider;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@RunWith(MockitoJUnitRunner.class)
 public class ChartBuilderTest {
 
-    ChartBuilder builder = new ChartBuilder();
+    @Mock
+    DateTimeProvider dateTimeProvider;
+
+    @InjectMocks
+    ChartBuilder sut = new ChartBuilder();
 
     @Test
     public void test() {
@@ -37,7 +46,7 @@ public class ChartBuilderTest {
         stock.getDayPrices().add(new DayPrice(LocalDate.of(2016, 1, 5), 3L, 3L));
         stock.getDayPrices().add(new DayPrice(LocalDate.of(2016, 1, 1), 1L, 5L));
         stock.getDayPrices().add(new DayPrice(LocalDate.of(2016, 1, 3), 2L, 3L));
-        ChartDataDTO dto = builder.createOne(stock, 2, Optional.empty(), false);
+        ChartDataDTO dto = sut.createOne(stock, 2, Optional.empty(), false);
         System.out.println(dto);
     }
 
@@ -62,7 +71,7 @@ public class ChartBuilderTest {
         weights.add(50);
         weights.add(50);
 
-        ChartDataDTO dto = builder.createAggregated(stocks, weights, 10, Optional.empty());
+        ChartDataDTO dto = sut.createAggregated(stocks, weights, 10, Optional.empty());
         System.out.println(dto);
     }
 }

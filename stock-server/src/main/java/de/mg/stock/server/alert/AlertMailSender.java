@@ -36,7 +36,10 @@ public class AlertMailSender {
 
     private void send(String msg, String subject) {
 
+        logger.info(subject + ": " + msg);
+
         if (!config.isAlertMailInitialized()) {
+            logger.warning("alert mail not initialized");
             return;
         }
 

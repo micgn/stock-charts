@@ -17,6 +17,7 @@
 package de.mg.stock.server.update;
 
 import de.mg.stock.server.model.DayPrice;
+import de.mg.stock.server.util.DateTimeProvider;
 import de.mg.stock.server.util.HttpUtil;
 
 import javax.inject.Inject;
@@ -41,10 +42,13 @@ public class StockUpdateFromYahooHistorical implements StockUpdaterHistorical {
     @Inject
     private HttpUtil httpUtil;
 
+    @Inject
+    private DateTimeProvider dateTimeProvider;
+
     @Override
     public List<DayPrice> get(String symbol) {
 
-        LocalDateTime fetchTime = LocalDateTime.now();
+        LocalDateTime fetchTime = dateTimeProvider.now();
 
         String response = httpUtil.get("http://ichart.yahoo.com/table.csv?s=" + symbol);
         if (isEmpty(response)) {

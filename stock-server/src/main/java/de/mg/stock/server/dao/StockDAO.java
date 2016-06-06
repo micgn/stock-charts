@@ -16,9 +16,10 @@
 
 package de.mg.stock.server.dao;
 
-import de.mg.stock.server.model.AlertMailStatus;
 import de.mg.stock.server.model.Stock;
+import de.mg.stock.server.util.DateTimeProvider;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -26,9 +27,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TemporalType;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Logger;
 
 import static de.mg.stock.server.util.DateConverters.toDate;
@@ -37,6 +36,9 @@ import static de.mg.stock.server.util.DateConverters.toDate;
 public class StockDAO {
 
     private static Logger logger = Logger.getLogger(StockDAO.class.getName());
+
+    @Inject
+    private DateTimeProvider dateTimeProvider;
 
     @PersistenceContext(name = "stock")
     private EntityManager em;
@@ -65,7 +67,7 @@ public class StockDAO {
 
     public void deleteOldInstantData() {
 
-        LocalDateTime keepSinceDate = LocalDateTime.now().minus(3, ChronoUnit.DAYS);
+        LocalDateTime keepSinceDate = dateTimeProvider.now().minus(3, ChronoUnit.DAYS);
         int deleted = em.createNamedQuery("deleteOldInstantPrices").
                 setParameter("keepSinceDate", toDate(keepSinceDate), TemporalType.TIMESTAMP).
                 executeUpdate();
