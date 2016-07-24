@@ -88,4 +88,11 @@ public class StockUpdateFromYahooHistorical implements StockUpdaterHistorical {
         return result;
     }
 
+    public void setHttpUtil(HttpUtil httpUtil) {
+        this.httpUtil = httpUtil;
+    }
+
+    public void setDateTimeProvider(DateTimeProvider dateTimeProvider) {
+        this.dateTimeProvider = dateTimeProvider;
+    }
 }

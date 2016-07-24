@@ -30,9 +30,7 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.logging.Logger;
 
-import static de.mg.stock.dto.StocksEnum.EMERGING;
-import static de.mg.stock.dto.StocksEnum.SMALL200;
-import static de.mg.stock.dto.StocksEnum.WORLD;
+import static de.mg.stock.dto.StocksEnum.*;
 import static javax.ejb.TransactionAttributeType.REQUIRED;
 
 @Stateless
@@ -55,13 +53,8 @@ public class StockUpdateTasks {
 
     @Schedule(hour = "5, 22", persistent = false)
     public void updateHistoricalData() {
-        // commented update tasks do not work
-        //updateHistoricalData(WORLD, google);
-        //updateHistoricalData(SMALL200, google);
         updateHistoricalData(EMERGING, google);
-
         updateHistoricalData(WORLD, yahoo);
-        //updateHistoricalData(EMERGING, yahoo);
         updateHistoricalData(SMALL200, yahoo);
     }
 
