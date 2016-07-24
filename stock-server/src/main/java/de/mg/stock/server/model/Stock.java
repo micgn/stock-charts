@@ -103,7 +103,7 @@ public class Stock extends AbstractEntity {
         return result;
     }
 
-    public void updateDayPrices(List<DayPrice> fetchedDayPrices) {
+    public void updateDayPrices(List<DayPrice> fetchedDayPrices, boolean overwrite) {
         if (fetchedDayPrices == null) return;
         for (DayPrice fetchedDayPrice : fetchedDayPrices) {
             if (!isContained(fetchedDayPrice, dayPrices)) {
@@ -111,6 +111,14 @@ public class Stock extends AbstractEntity {
                 dayPrices.add(fetchedDayPrice);
             } else {
                 checkForChange(fetchedDayPrice, dayPrices);
+
+                if (overwrite) {
+                    DayPrice dayPriceToUpdate = dayPrices.stream().
+                            filter(dayPrice -> dayPrice.getDay().equals(fetchedDayPrice.getDay())).
+                            collect(Collectors.toList()).get(0);
+                    dayPriceToUpdate.setMax(fetchedDayPrice.getMax());
+                    dayPriceToUpdate.setMin(fetchedDayPrice.getMin());
+                }
             }
         }
     }

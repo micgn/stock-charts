@@ -53,9 +53,12 @@ public class StockUpdateTasks {
 
     @Schedule(hour = "5, 22", persistent = false)
     public void updateHistoricalData() {
-        updateHistoricalData(EMERGING, google);
-        updateHistoricalData(WORLD, yahoo);
-        updateHistoricalData(SMALL200, yahoo);
+        // changed from google to yahoo on 24.7.16
+        //updateHistoricalData(EMERGING, google);
+        updateHistoricalData(EMERGING, yahoo, true);
+
+        updateHistoricalData(WORLD, yahoo, false);
+        updateHistoricalData(SMALL200, yahoo, false);
     }
 
     @Schedule(hour = "7-23", minute = "5, 15, 25, 35, 45, 55", persistent = false)
@@ -78,13 +81,13 @@ public class StockUpdateTasks {
         updateHistoricalData();
     }
 
-    private void updateHistoricalData(StocksEnum stocksEnum, StockUpdaterHistorical updater) {
+    private void updateHistoricalData(StocksEnum stocksEnum, StockUpdaterHistorical updater, boolean overwrite) {
         String symbol = stocksEnum.getSymbol();
 
         logger.info("going for historical data: " + symbol + " (" + updater.getClass().getSimpleName() + ")");
         List<DayPrice> dayPrices = updater.get(symbol);
         Stock stock = stockDAO.findOrCreateStock(symbol);
-        stock.updateDayPrices(dayPrices);
+        stock.updateDayPrices(dayPrices, overwrite);
         logger.info("historical data finished: " + symbol + " (" + updater.getClass().getSimpleName() + ")");
         for (DayPrice dp : dayPrices)
             if (!dp.isValid()) logger.warning("invalid: " + dp);
