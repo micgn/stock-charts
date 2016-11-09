@@ -69,15 +69,15 @@ public class AlertCalculator {
             Long lastAvg = lastPrice.get().getAverage();
             List<Long> relevantPricePercentages = relevantPricePercentages(stock, lastAvg, percentageThreshold, withinDaysBack);
             if (relevantPricePercentages.size() == 0) {
-                LOG.warning("no relevant prices found for " + stock.getSymbol());
+                LOG.info("no relevant prices found for " + stock.getSymbol() + " and threshold " + percentageThreshold);
             } else {
-                LOG.info(relevantPricePercentages.size() + " relevant prices found");
+                LOG.info(relevantPricePercentages.size() + " relevant prices found for threshold " + percentageThreshold);
             }
             Long relevantMax = relevantPricePercentages.stream().max(Long::compareTo).orElse(0L);
             Long relevantMin = relevantPricePercentages.stream().min(Long::compareTo).orElse(0L);
 
             Long change = abs(relevantMax) > abs(relevantMin) ? relevantMax : relevantMin;
-            LOG.info("found percentag change for " + stock.getSymbol() + ": " + change);
+            LOG.info("found percentage change for " + stock.getSymbol() + ": " + change);
 
             if (change != 0L)
                 result.put(StocksEnum.of(stock.getSymbol()), change);
