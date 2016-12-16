@@ -1,16 +1,20 @@
 package de.mg.stock.server.alert;
 
+import de.mg.stock.dto.StockKeyDataDto;
 import de.mg.stock.dto.StocksEnum;
 import de.mg.stock.server.dao.AlertDAO;
 import de.mg.stock.server.dao.StockDAO;
 import de.mg.stock.server.logic.AlertCalculator;
+import de.mg.stock.server.logic.KeyDataBuilder;
 import de.mg.stock.server.util.DateTimeProvider;
+import de.mg.stock.server.util.KeyDataCsvBuilder;
 
 import javax.ejb.Schedule;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.inject.Inject;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -21,7 +25,6 @@ import static javax.ejb.TransactionAttributeType.REQUIRED;
 @Stateless
 @TransactionAttribute(REQUIRED)
 public class AlertMailTask {
-
 
     @Inject
     private StockDAO stockDAO;
@@ -37,6 +40,12 @@ public class AlertMailTask {
 
     @Inject
     private DateTimeProvider dateTimeProvider;
+
+    @Inject
+    private KeyDataBuilder keyDataBuilder;
+
+    @Inject
+    private KeyDataCsvBuilder keyDataCsvBuilder;
 
 
     @Schedule(minute = "10, 30, 50", persistent = false)
@@ -57,8 +66,10 @@ public class AlertMailTask {
 
     @Schedule(dayOfWeek = "5", persistent = false)
     public void sendWeeklyMail() {
-        Map<StocksEnum, Long> changes = alertCalculator.weeklyChanges();
-        alertMailSender.send(formatMsg(changes), "Weekly Stock Changes");
+        List<StockKeyDataDto> stockKeyData = keyDataBuilder.create();
+        String str = keyDataCsvBuilder.asCsv(stockKeyData);
+        str = str.replaceAll(";", "\t");
+        alertMailSender.send(str, "Weekly Stock Changes");
     }
 
     private String formatMsg(Map<StocksEnum, Long> changes) {

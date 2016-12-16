@@ -31,12 +31,14 @@ import java.util.stream.Stream;
 
 import static java.lang.Math.round;
 import static java.time.LocalDate.now;
+import static java.time.temporal.ChronoUnit.DAYS;
 import static java.util.Comparator.comparing;
 
 @Singleton
 public class KeyDataBuilder {
 
-    private Integer[] DAY_INTERVALS = {3, 7, 30, 90, 180, 365, 2 * 365, 5 * 365, 10 * 365, 20 * 365, 30 * 365};
+    private Integer[] DAY_INTERVALS = {3, 7, 30, 90, 180, 365, 2 * 365, 3 * 365, 4 * 365, 5 * 365, 7 * 365,
+            10 * 365, 15 * 365, 20 * 365, 30 * 365};
 
     @Inject
     private StockDAO stockDAO;
@@ -48,7 +50,12 @@ public class KeyDataBuilder {
         for (Stock stock : stockDAO.findAllStocks()) {
             List<DayPrice> all = stock.getDayPrices();
 
+            Optional<Long> maxDistanceInDays = dayPricesInInterval(all, 50 * 365).sorted(comparing(DayPrice::getDay)).
+                    findFirst().map(DayPrice::getDay).map(first -> first.until(now(), DAYS));
+
             for (int distance : DAY_INTERVALS) {
+
+                if (distance > maxDistanceInDays.orElse(0L)) continue;
 
                 StockKeyDataDto data = new StockKeyDataDto();
                 data.setStock(StocksEnum.of(stock.getSymbol()));
