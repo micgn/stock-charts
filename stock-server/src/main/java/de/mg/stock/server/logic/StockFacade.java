@@ -23,6 +23,7 @@ import de.mg.stock.dto.StocksEnum;
 import de.mg.stock.server.Config;
 import de.mg.stock.server.dao.StockDAO;
 import de.mg.stock.server.model.Stock;
+import de.mg.stock.server.util.KeyDataCsvBuilder;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -41,6 +42,7 @@ import java.util.logging.Logger;
 import static java.time.format.DateTimeFormatter.ofPattern;
 import static javax.ejb.TransactionAttributeType.REQUIRED;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 @Stateless
@@ -61,6 +63,9 @@ public class StockFacade {
 
     @Inject
     private KeyDataBuilder keyDataBuilder;
+
+    @Inject
+    private KeyDataCsvBuilder keyDataCsvBuilder;
 
     @Inject
     private Config config;
@@ -186,6 +191,14 @@ public class StockFacade {
     public List<StockKeyDataDto> statistics() {
         List<StockKeyDataDto> stockKeyData = keyDataBuilder.create();
         return stockKeyData;
+    }
+
+    @GET
+    @Produces(TEXT_PLAIN)
+    @Path("statisticsCsv")
+    public String statisticsCsv() {
+        List<StockKeyDataDto> stockKeyData = keyDataBuilder.create();
+        return keyDataCsvBuilder.asCsv(stockKeyData);
     }
 
 
