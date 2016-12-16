@@ -15,16 +15,22 @@
  */
 package de.mg.stock.dto;
 
-import java.time.LocalDateTime;
+import de.mg.stock.util.LocalDateAdapter;
+
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.time.LocalDate;
 
 
+@XmlRootElement
 public class StockKeyDataDto {
 
     private StocksEnum stock;
     private Integer distanceInDays;
     private Long min, max;
     private Long minToMaxPercentage;
-    private LocalDateTime minDate, maxDate;
+    private LocalDate minDate;
+    private LocalDate maxDate;
     private Long exactPerformancePercentage, averagePerformancePercentage;
 
     public StocksEnum getStock() {
@@ -67,19 +73,21 @@ public class StockKeyDataDto {
         this.minToMaxPercentage = minToMaxPercentage;
     }
 
-    public LocalDateTime getMinDate() {
+    @XmlJavaTypeAdapter(LocalDateAdapter.class)
+    public LocalDate getMinDate() {
         return minDate;
     }
 
-    public void setMinDate(LocalDateTime minDate) {
+    public void setMinDate(LocalDate minDate) {
         this.minDate = minDate;
     }
 
-    public LocalDateTime getMaxDate() {
+    @XmlJavaTypeAdapter(LocalDateAdapter.class)
+    public LocalDate getMaxDate() {
         return maxDate;
     }
 
-    public void setMaxDate(LocalDateTime maxDate) {
+    public void setMaxDate(LocalDate maxDate) {
         this.maxDate = maxDate;
     }
 

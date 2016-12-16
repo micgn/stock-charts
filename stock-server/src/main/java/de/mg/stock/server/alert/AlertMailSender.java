@@ -1,6 +1,5 @@
 package de.mg.stock.server.alert;
 
-import de.mg.stock.dto.StocksEnum;
 import de.mg.stock.server.Config;
 
 import javax.inject.Inject;
@@ -8,7 +7,6 @@ import javax.inject.Singleton;
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,20 +19,11 @@ public class AlertMailSender {
     @Inject
     private Config config;
 
-    public void send(Map<StocksEnum, Long> changePercent, String subject) {
-
-        String msg = "";
-        for (StocksEnum stock : changePercent.keySet()) {
-            msg += stock.getName() + " --> " + changePercent.get(stock) + "%\n";
-        }
-        send(msg, subject);
-    }
-
     public void sendStartupMail() {
         send("alert mail sending initialized", "Initialized...");
     }
 
-    private void send(String msg, String subject) {
+    public void send(String msg, String subject) {
 
         logger.info(subject + ": " + msg);
 

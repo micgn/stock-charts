@@ -48,9 +48,9 @@ public class AlertMailTask {
         if (lastAlert.isPresent() && isSameDay(lastAlert.get(), today))
             return;
 
-        Map<StocksEnum, Long> alerts = alertCalculator.immediateToNofifyChanges();
-        if (!alerts.isEmpty()) {
-            alertMailSender.send(alerts, "Stock Alert");
+        Map<StocksEnum, Long> changePercent = alertCalculator.immediateToNofifyChanges();
+        if (!changePercent.isEmpty()) {
+            alertMailSender.send(formatMsg(changePercent), "Stock Alert");
             alertDAO.setLastAlertSent(today);
         }
     }
@@ -58,7 +58,15 @@ public class AlertMailTask {
     @Schedule(dayOfWeek = "5", persistent = false)
     public void sendWeeklyMail() {
         Map<StocksEnum, Long> changes = alertCalculator.weeklyChanges();
-        alertMailSender.send(changes, "Weekly Stock Changes");
+        alertMailSender.send(formatMsg(changes), "Weekly Stock Changes");
+    }
+
+    private String formatMsg(Map<StocksEnum, Long> changes) {
+        String msg = "";
+        for (StocksEnum stock : changes.keySet()) {
+            msg += stock.getName() + " --> " + changes.get(stock) + "%\n";
+        }
+        return msg;
     }
 
 }

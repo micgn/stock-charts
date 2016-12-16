@@ -18,6 +18,7 @@ package de.mg.stock.server.logic;
 
 import de.mg.stock.dto.AllInOneChartDto;
 import de.mg.stock.dto.ChartDataDTO;
+import de.mg.stock.dto.StockKeyDataDto;
 import de.mg.stock.dto.StocksEnum;
 import de.mg.stock.server.Config;
 import de.mg.stock.server.dao.StockDAO;
@@ -28,12 +29,7 @@ import javax.ejb.TransactionAttribute;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -50,7 +46,6 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
 @Stateless
 @TransactionAttribute(REQUIRED)
 @Path("/")
-@SuppressWarnings("unused")
 public class StockFacade {
 
     private static Logger logger = Logger.getLogger(StockFacade.class.getName());
@@ -63,6 +58,9 @@ public class StockFacade {
 
     @Inject
     private StockDAO stockDAO;
+
+    @Inject
+    private KeyDataBuilder keyDataBuilder;
 
     @Inject
     private Config config;
@@ -155,7 +153,7 @@ public class StockFacade {
 
         if (!config.isWriteAccessEnabled()) {
             logger.warning("no write access!");
-            
+
             return Response.status(Response.Status.FORBIDDEN).
                     entity("server missing -D" + Config.SWITCH_WRITE_ACCESS).build();
         }
@@ -180,6 +178,16 @@ public class StockFacade {
         logger.info(msg);
         return Response.status(Response.Status.OK).build();
     }
+
+
+    @GET
+    @Produces(APPLICATION_XML)
+    @Path("statistics")
+    public List<StockKeyDataDto> statistics() {
+        List<StockKeyDataDto> stockKeyData = keyDataBuilder.create();
+        return stockKeyData;
+    }
+
 
     public static String stockStats(List<Stock> all) {
         String stats = "";
