@@ -22,8 +22,8 @@ import java.time.LocalDateTime
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter
 
 class ChartItemDTO(@get:XmlJavaTypeAdapter(LocalDateTimeAdapter::class) var dateTime: LocalDateTime,
-                   var minLong: Long?,
-                   var maxLong: Long?,
+                   var minLong: Long? = null,
+                   var maxLong: Long? = null,
                    var averageLong: Long?,
                    var instantPrice: Boolean) : Serializable {
 

@@ -32,46 +32,42 @@ import javax.inject.Inject
 class ChartBuilder {
 
     @Inject
-    private var dateTimeProvider: DateTimeProvider? = null
+    lateinit private var dateTimeProvider: DateTimeProvider
 
-    fun createOne(stock: Stock, points: Int, since: Optional<LocalDate>, percentages: Boolean): ChartDataDTO {
+    fun createOne(stock: Stock, points: Int, sinceParam: Optional<LocalDate>, percentages: Boolean): ChartDataDTO {
 
-        val dto = ChartDataDTO(stock.name, dateTimeProvider!!.now())
+        val since: LocalDate? = sinceParam.orElse(null)
 
-        val dayPoints: Int
-        val instantPoints: Int
-        if (stock.instantPrices.size > 0) {
-            dayPoints = (points * 0.8).toInt()
-            instantPoints = (points * 0.2).toInt()
-        } else {
-            dayPoints = points
-            instantPoints = 0
-        }
+        val dto = ChartDataDTO(stock.name, dateTimeProvider.now())
+
+        val dayPoints = if (stock.instantPrices.isNotEmpty()) (points * 0.8).toInt() else points
+        val instantPoints = if (stock.instantPrices.isNotEmpty()) (points * 0.2).toInt() else 0
 
         val firstInstantPrice = stock.instantPrices.minBy { it.time }?.time ?: LocalDateTime.MAX
 
         val isAfterSinceAndBeforeInstantPrices = { dp: DayPrice ->
-            val isAfterSince = if (!since.isPresent)
-                true
-            else
-                dp.day.isAfter(since.get()) || dp.day.isEqual(since.get())
+            val isAfterSince = since == null || dp.day.isAfter(since) || dp.day.isEqual(since)
             isAfterSince && dp.day.plus(1, ChronoUnit.DAYS).atStartOfDay().isBefore(firstInstantPrice)
         }
 
-        val dayItems = ArrayList<ChartItemDTO>()
-        stock.dayPrices.filter(isAfterSinceAndBeforeInstantPrices).sortedBy { it.day }.forEach {
+        val dayItems = stock.dayPrices.filter(isAfterSinceAndBeforeInstantPrices).sortedBy { it.day }.map {
             dp ->
-            dayItems.add(ChartItemDTO.Builder().setDateTime(dp.day.atStartOfDay()).setMinLong(dp.min).
-                    setMaxLong(dp.max).setAverageLong(average(dp.min, dp.max)).setInstantPrice(false).build())
+            ChartItemDTO(dateTime = dp.day.atStartOfDay(), minLong = dp.min, maxLong = dp.max,
+                    averageLong = average(dp.min, dp.max), instantPrice = false)
         }
+                // TODO
+                .toMutableList()
+
         aggregate(dayItems, dayPoints)
 
-        val instantItems = ArrayList<ChartItemDTO>()
-        stock.instantPrices.sortedBy { it.time }.forEach {
+        val instantItems = stock.instantPrices.sortedBy { it.time }.map {
             ip ->
-            instantItems.add(ChartItemDTO.Builder().setDateTime(ip.time).setMinLong(ip.min).setMaxLong(ip.max).
-                    setAverageLong(average(ip.min, ip.max)).setInstantPrice(true).build())
+            ChartItemDTO(dateTime = ip.time, minLong = ip.min, maxLong = ip.max,
+                    averageLong = average(ip.min, ip.max), instantPrice = true)
         }
+                // TODO
+                .toMutableList()
+
         aggregate(instantItems, instantPoints)
 
         dto.items.addAll(dayItems)
@@ -102,8 +98,7 @@ class ChartBuilder {
             }
 
             val aggregatedAvgPercentLong = round(aggregatedAvgPercent * 100.0 * 100.0)
-            val itemDto = ChartItemDTO.Builder().setDateTime(date.atStartOfDay()).
-                    setAverageLong(aggregatedAvgPercentLong).setInstantPrice(false).build()
+            val itemDto = ChartItemDTO(dateTime = date.atStartOfDay(), averageLong = aggregatedAvgPercentLong, instantPrice = false)
             aggregatedItemList.add(itemDto)
         }
 
