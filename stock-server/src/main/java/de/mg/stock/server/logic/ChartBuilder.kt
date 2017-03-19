@@ -35,7 +35,6 @@ class ChartBuilder {
     lateinit private var dateTimeProvider: DateTimeProvider
 
     fun createOne(stock: Stock, points: Int, sinceParam: Optional<LocalDate>, percentages: Boolean): ChartDataDTO {
-
         val since: LocalDate? = sinceParam.orElse(null)
 
         val dto = ChartDataDTO(stock.name, dateTimeProvider.now())
@@ -73,33 +72,28 @@ class ChartBuilder {
     }
 
 
-    fun createAggregated(stocks: List<Stock>, stockWeights: List<Int>, points: Int, since: Optional<LocalDate>): ChartDataDTO {
+    fun createAggregated(stocks: List<Stock>, stockWeights: List<Int>, points: Int, sinceParam: Optional<LocalDate>): ChartDataDTO {
+        val since: LocalDate? = sinceParam.orElse(null)
 
         if (stocks.size < 2) throw RuntimeException("at least 2 stocks need to be aggregated")
         if (stocks.size != stockWeights.size) throw RuntimeException("different amounts of stocks and stock weights")
 
-        val avgPercentsPerDate = avgPercentsPerDate(stocks, since)
+        val avgPercentsPerDate: Map<LocalDate, List<Double>> = avgPercentsPerDate(stocks, since)
 
-        val aggregatedItemList = ArrayList<ChartItemDTO>()
-        for (date in avgPercentsPerDate.keys) {
-            val avgPercents = avgPercentsPerDate[date]
-            var aggregatedAvgPercent = 0.0
-            for (i in avgPercents!!.indices) {
-                val avg = avgPercents!!.get(i)
-                aggregatedAvgPercent += avg * stockWeights[i] / 100.0
-            }
+        val aggregatedItemList =
+                avgPercentsPerDate.keys.map { date ->
 
-            val aggregatedAvgPercentLong = round(aggregatedAvgPercent * 100.0 * 100.0)
-            val itemDto = ChartItemDTO(dateTime = date.atStartOfDay(), averageLong = aggregatedAvgPercentLong, instantPrice = false)
-            aggregatedItemList.add(itemDto)
-        }
+                    val averagePercents = avgPercentsPerDate[date] ?: listOf()
+                    val aggregatedAvgPercent = averagePercents.mapIndexed { index, percent -> percent * stockWeights[index] / 100.0 }.sum()
+                    val aggregatedAvgPercentLong = round(aggregatedAvgPercent * 100.0 * 100.0)
 
-        // TODO ???
-        val sortedAggregatedItemList = aggregatedItemList.sortedBy { it.dateTime }
-        aggregatedItemList.sortBy { it.dateTime }
+                    ChartItemDTO(dateTime = date.atStartOfDay(), averageLong = aggregatedAvgPercentLong, instantPrice = false)
+
+                }.sortedBy { it.dateTime }.toMutableList()
+
         aggregate(aggregatedItemList, points)
 
-        val dto = ChartDataDTO("aggregated", dateTimeProvider!!.now())
+        val dto = ChartDataDTO("aggregated", dateTimeProvider.now())
         dto.items.addAll(aggregatedItemList)
         return dto
     }
@@ -107,23 +101,21 @@ class ChartBuilder {
 
     fun createAllInOne(stocks: List<Stock>, points: Int, since: LocalDate): AllInOneChartDto {
 
-        val avgPercentsPerDate = avgPercentsPerDate(stocks, Optional.of(since))
+        val avgPercentsPerDate = avgPercentsPerDate(stocks, since)
 
-        val items = ArrayList<AllInOneChartItemDto>()
-        for (date in avgPercentsPerDate.keys) {
-            val avgs = avgPercentsPerDate[date]
+        val items = avgPercentsPerDate.keys.map { date ->
+
+            val averagePercents = avgPercentsPerDate[date] ?: listOf()
 
             val item = AllInOneChartItemDto()
             item.dateTime = date.atStartOfDay()
-            for (i in avgs!!.indices) {
-                val avg = if (avgs!!.get(i) != null) avgs.get(i) else 0.0
+            for ((index, avg) in averagePercents.withIndex()) {
                 val avgLong = round(avg * 100.0 * 100.0)
-                item.addAverageLong(StocksEnum.of(stocks[i].symbol), avgLong)
+                val symbol = StocksEnum.of(stocks[index].symbol)
+                item.addAverageLong(symbol, avgLong)
             }
-            items.add(item)
-        }
-
-        items.sortBy { it.dateTime }
+            item
+        }.sortedBy { it.dateTime }.toMutableList()
 
         // TODO aggregation to max points, if needed
 
@@ -133,42 +125,45 @@ class ChartBuilder {
     }
 
 
-    private fun avgPercentsPerDate(stocks: List<Stock>, since: Optional<LocalDate>): Map<LocalDate, List<Double>> {
+    private fun avgPercentsPerDate(stocks: List<Stock>, since: LocalDate?): Map<LocalDate, List<Double>> {
 
         // create several item lists after since date
-        val avgPerDateList = ArrayList<Map<LocalDate, Long>>()
-        for (stock in stocks) {
-            val avgPerDate = HashMap<LocalDate, Long>()
-            stock.dayPrices.stream().filter { dp -> !since.isPresent || dp.day.isAfter(since.get()) }.forEach { dp -> avgPerDate.put(dp.day, dp.average) }
-            avgPerDateList.add(avgPerDate)
+        val avgPerDateList = stocks.map {
+            it.dayPrices.
+                    filter { dp -> since == null || dp.day.isAfter(since) }.
+                    map { dp -> dp.day to dp.average }.toMap()
         }
 
         // find intersection dates
-        val intersectionDates = HashSet<LocalDate>()
-        avgPerDateList[0].keys.stream().forEach { dayPrice -> intersectionDates.add(LocalDate.ofYearDay(dayPrice.year, dayPrice.dayOfYear)) }
-        avgPerDateList.stream().skip(1).forEach { items -> intersectionDates.retainAll(items.keys) }
+        val intersectionDates = mutableSetOf<LocalDate>()
+        avgPerDateList[0].keys.forEach {
+            dayPrice ->
+            intersectionDates.add(LocalDate.ofYearDay(dayPrice.year, dayPrice.dayOfYear))
+        }
+        avgPerDateList.forEachIndexed {
+            index, items ->
+            if (index != 0) intersectionDates.retainAll(items.keys)
+        }
 
-        if (intersectionDates.size == 0)
-            throw RuntimeException("no intersection found")
+        if (intersectionDates.size == 0) throw RuntimeException("no intersection found")
 
         // find first averages, needed for calculating percentages
-        val firstDate = intersectionDates.stream().min { obj, other -> obj.compareTo(other) }.get()
-        val firstAverages = ArrayList<Long?>()
-        avgPerDateList.stream().forEach { avgPerDate -> firstAverages.add(avgPerDate[firstDate]) }
-        if (firstAverages.contains(null))
-            throw RuntimeException("missing first average for percentage calculation")
+        val firstDate = intersectionDates.min()
+        val firstAverages = avgPerDateList.map { avgPerDate -> avgPerDate[firstDate] }
 
-        val avgPercentsPerDate = HashMap<LocalDate, List<Double>>()
-        for (date in intersectionDates) {
-            val averages = ArrayList<Double>()
-            for (i in avgPerDateList.indices) {
-                val avg: Long = avgPerDateList[i][date] ?: 0L
-                val first = firstAverages[i] ?: 0L
+        if (firstAverages.contains(null)) throw RuntimeException("missing first average for percentage calculation")
+
+
+        val avgPercentsPerDate = intersectionDates.map { date ->
+            val averages = avgPerDateList.mapIndexed { index, avgPerDate ->
+                val avg = avgPerDate[date] ?: 0
+                val first = firstAverages[index] ?: 0
                 val avgPercent = 1.0 * (avg - first) / first
-                averages.add(avgPercent)
+                avgPercent
             }
-            avgPercentsPerDate.put(date, averages)
-        }
+            date to averages
+        }.toMap()
+
         return avgPercentsPerDate
     }
 
