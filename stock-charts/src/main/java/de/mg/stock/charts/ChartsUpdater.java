@@ -172,7 +172,7 @@ class ChartsUpdater {
 
             lastChartData.update(data.getDateTime());
 
-            String pattern = (data.isInstantPrice()) ? "* dd. HH:mm" : "dd.MM.yy";
+            String pattern = (data.getInstantPrice()) ? "* dd. HH:mm" : "dd.MM.yy";
             String label = data.getDateTime().format(ofPattern(pattern));
 
             if (data.getMax() != null)
