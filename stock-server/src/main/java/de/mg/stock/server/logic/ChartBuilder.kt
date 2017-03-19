@@ -50,41 +50,33 @@ class ChartBuilder {
             isAfterSince && dp.day.plus(1, ChronoUnit.DAYS).atStartOfDay().isBefore(firstInstantPrice)
         }
 
-        val dayItems = stock.dayPrices.filter(isAfterSinceAndBeforeInstantPrices).sortedBy { it.day }.map {
-            dp ->
+        val dayItems = stock.dayPrices.filter(isAfterSinceAndBeforeInstantPrices).sortedBy { it.day }.map { dp ->
             ChartItemDTO(dateTime = dp.day.atStartOfDay(), minLong = dp.min, maxLong = dp.max,
                     averageLong = average(dp.min, dp.max), instantPrice = false)
-        }
-                // TODO
-                .toMutableList()
+        }.toMutableList()
 
         aggregate(dayItems, dayPoints)
 
-        val instantItems = stock.instantPrices.sortedBy { it.time }.map {
-            ip ->
+        val instantItems = stock.instantPrices.sortedBy { it.time }.map { ip ->
             ChartItemDTO(dateTime = ip.time, minLong = ip.min, maxLong = ip.max,
                     averageLong = average(ip.min, ip.max), instantPrice = true)
-        }
-                // TODO
-                .toMutableList()
+        }.toMutableList()
 
         aggregate(instantItems, instantPoints)
 
         dto.items.addAll(dayItems)
         dto.items.addAll(instantItems)
 
-        if (percentages)
-            transformIntoPercentages(dto.items)
+        if (percentages) transformToPercentages(dto.items)
 
         return dto
     }
 
+
     fun createAggregated(stocks: List<Stock>, stockWeights: List<Int>, points: Int, since: Optional<LocalDate>): ChartDataDTO {
 
-        if (stocks.size < 2)
-            throw RuntimeException("at least 2 stocks need to be aggregated")
-        if (stocks.size != stockWeights.size)
-            throw RuntimeException("different amounts of stocks and stock weights")
+        if (stocks.size < 2) throw RuntimeException("at least 2 stocks need to be aggregated")
+        if (stocks.size != stockWeights.size) throw RuntimeException("different amounts of stocks and stock weights")
 
         val avgPercentsPerDate = avgPercentsPerDate(stocks, since)
 
@@ -102,6 +94,7 @@ class ChartBuilder {
             aggregatedItemList.add(itemDto)
         }
 
+        // TODO ???
         val sortedAggregatedItemList = aggregatedItemList.sortedBy { it.dateTime }
         aggregatedItemList.sortBy { it.dateTime }
         aggregate(aggregatedItemList, points)
@@ -110,6 +103,7 @@ class ChartBuilder {
         dto.items.addAll(aggregatedItemList)
         return dto
     }
+
 
     fun createAllInOne(stocks: List<Stock>, points: Int, since: LocalDate): AllInOneChartDto {
 
@@ -137,6 +131,7 @@ class ChartBuilder {
         dto.items = items
         return dto
     }
+
 
     private fun avgPercentsPerDate(stocks: List<Stock>, since: Optional<LocalDate>): Map<LocalDate, List<Double>> {
 
@@ -177,11 +172,21 @@ class ChartBuilder {
         return avgPercentsPerDate
     }
 
-    private fun aggregate(items: MutableList<ChartItemDTO>, points: Int) {
+
+    private fun aggregate(items: MutableList<ChartItemDTO>, pointsNeeded: Int): Unit {
+
+        fun aggregate(updateItem: ChartItemDTO, mergeItem: ChartItemDTO): Unit {
+            updateItem.maxLong = max(updateItem.maxLong, mergeItem.maxLong)
+            updateItem.minLong = min(updateItem.minLong, mergeItem.minLong)
+            updateItem.averageLong = average(updateItem.averageLong, mergeItem.averageLong)
+
+            val diff = updateItem.dateTime.until(mergeItem.dateTime, ChronoUnit.SECONDS)
+            val medium = updateItem.dateTime.plus(diff / 2, ChronoUnit.SECONDS)
+            updateItem.dateTime = medium
+        }
 
         var index = 0
-        while (items.size > points) {
-
+        while (items.size > pointsNeeded) {
             if (index + 1 < items.size) {
                 aggregate(items[index], items[index + 1])
                 items.removeAt(index + 1)
@@ -192,61 +197,43 @@ class ChartBuilder {
         }
     }
 
-    private fun aggregate(item2Update: ChartItemDTO, item2Merge: ChartItemDTO) {
-        item2Update.maxLong = max(item2Update.maxLong, item2Merge.maxLong)
-        item2Update.minLong = min(item2Update.minLong, item2Merge.minLong)
-        item2Update.averageLong = average(item2Update.averageLong, item2Merge.averageLong)
 
-        val diff = item2Update.dateTime.until(item2Merge.dateTime, ChronoUnit.SECONDS)
-        val medium = item2Update.dateTime.plus(diff / 2, ChronoUnit.SECONDS)
-        item2Update.dateTime = medium
-    }
-
-    private fun average(l1: Long?, l2: Long?): Long? {
-        if (l1 == null) return l2
-        if (l2 == null) return l1
-        return round((l1 + l2) / 2.0)
-    }
-
-    private fun max(l1: Long?, l2: Long?): Long? {
-        if (l1 == null) return l2
-        if (l2 == null) return l1
-        return Math.max(l1, l2)
-    }
-
-    private fun min(l1: Long?, l2: Long?): Long? {
-        if (l1 == null) return l2
-        if (l2 == null) return l1
-        return Math.min(l1, l2)
-    }
-
-    private fun transformIntoPercentages(items: List<ChartItemDTO>) {
+    private fun transformToPercentages(items: List<ChartItemDTO>) {
         if (items.isEmpty()) return
 
         val first = items[0]
-        val firstAvg: Double
-        if (first.averageLong != null) {
-            firstAvg = first.averageLong!!.toDouble()
-        } else if (first.minLong != null && first.maxLong != null) {
-            firstAvg = (first.minLong!!.toDouble() + first.maxLong!!.toDouble()) / 2.0
-        } else {
-            throw RuntimeException("no first element for calculating percentages")
-        }
+        val firstAvg: Double =
+                if (first.averageLong != null)
+                    first.averageLong!!.toDouble()
+                else if (first.minLong != null && first.maxLong != null)
+                    (first.minLong!! + first.maxLong!!) / 2.0
+                else throw RuntimeException("no first element for calculating percentages")
 
-        items.stream().forEach { item ->
+        items.forEach { item ->
             item.minLong = percent(firstAvg, item.minLong)
             item.maxLong = percent(firstAvg, item.maxLong)
             item.averageLong = percent(firstAvg, item.averageLong)
         }
     }
 
-    private fun percent(first: Double, value: Long?): Long {
-        if (first == 0.0 || value == null || value == 0L) {
-            return 0
-        }
-        val percent = (value.toDouble() - first) / first
-        val percentLong = round(percent * 100.0 * 100.0)
-        return percentLong
-    }
-
 }
+
+private fun percent(first: Double, value: Long?): Long =
+        if (first == 0.0 || value == null || value == 0L) 0
+        else {
+            val percent = (value.toDouble() - first) / first
+            round(percent * 100.0 * 100.0)
+        }
+
+
+private fun average(l1: Long?, l2: Long?): Long? =
+        if (l1 == null) l2 else if (l2 == null) l1 else round((l1 + l2) / 2.0)
+
+
+private fun max(l1: Long?, l2: Long?): Long? =
+        if (l1 == null) l2 else if (l2 == null) l1 else Math.max(l1, l2)
+
+
+private fun min(l1: Long?, l2: Long?): Long? =
+        if (l1 == null) l2 else if (l2 == null) l1 else Math.min(l1, l2)
+
