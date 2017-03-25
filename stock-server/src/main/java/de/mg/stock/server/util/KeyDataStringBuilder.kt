@@ -29,7 +29,7 @@ class KeyDataStringBuilder {
     }
 
     fun asHtml(list: List<StockKeyDataDto>) =
-            "<table><tr><td>" + asCsv(list).dropLast(1).replace(";".toRegex(), "</td><td>").
+            "<table border=\"1\" cellpadding=\"5px\"><tr><td>" + asCsv(list).dropLast(1).replace(";".toRegex(), "</td><td>").
                     replace("\n".toRegex(), "</td></tr><tr><td>") + "</td></tr></table>"
 
 
