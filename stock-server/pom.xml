@@ -9,7 +9,6 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>de.mg.stock</groupId>
     <artifactId>stock-server</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>war</packaging>
@@ -60,6 +59,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.5.1</version>
                 <executions>
                     <execution>
                         <id>default-compile</id>

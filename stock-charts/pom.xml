@@ -10,7 +10,6 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>de.mg.stock</groupId>
     <artifactId>stock-charts</artifactId>
     <name>stock-charts</name>
     <packaging>jar</packaging>
