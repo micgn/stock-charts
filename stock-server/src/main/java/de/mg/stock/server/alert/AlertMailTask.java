@@ -7,7 +7,7 @@ import de.mg.stock.server.dao.StockDAO;
 import de.mg.stock.server.logic.AlertCalculator;
 import de.mg.stock.server.logic.KeyDataBuilder;
 import de.mg.stock.server.util.DateTimeProvider;
-import de.mg.stock.server.util.KeyDataCsvBuilder;
+import de.mg.stock.server.util.KeyDataStringBuilder;
 
 import javax.ejb.Schedule;
 import javax.ejb.Stateless;
@@ -45,7 +45,7 @@ public class AlertMailTask {
     private KeyDataBuilder keyDataBuilder;
 
     @Inject
-    private KeyDataCsvBuilder keyDataCsvBuilder;
+    private KeyDataStringBuilder keyDataStringBuilder;
 
 
     @Schedule(minute = "10, 30, 50", persistent = false)
@@ -67,17 +67,16 @@ public class AlertMailTask {
     @Schedule(dayOfWeek = "5", persistent = false)
     public void sendWeeklyMail() {
         List<StockKeyDataDto> stockKeyData = keyDataBuilder.create();
-        String str = keyDataCsvBuilder.asCsv(stockKeyData);
-        str = str.replaceAll(";", "\t");
+        String str = keyDataStringBuilder.asHtml(stockKeyData);
         alertMailSender.send(str, "Weekly Stock Changes");
     }
 
     private String formatMsg(Map<StocksEnum, Long> changes) {
-        String msg = "";
+        StringBuilder msg = new StringBuilder();
         for (StocksEnum stock : changes.keySet()) {
-            msg += stock.getName() + " --> " + changes.get(stock) + "%\n";
+            msg.append(stock.getName()).append(" --> ").append(changes.get(stock)).append("%\n");
         }
-        return msg;
+        return msg.toString();
     }
 
 }

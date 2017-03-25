@@ -23,14 +23,19 @@ import de.mg.stock.dto.StocksEnum;
 import de.mg.stock.server.Config;
 import de.mg.stock.server.dao.StockDAO;
 import de.mg.stock.server.model.Stock;
-import de.mg.stock.server.util.KeyDataCsvBuilder;
+import de.mg.stock.server.util.KeyDataStringBuilder;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -65,7 +70,7 @@ public class StockFacade {
     private KeyDataBuilder keyDataBuilder;
 
     @Inject
-    private KeyDataCsvBuilder keyDataCsvBuilder;
+    private KeyDataStringBuilder keyDataStringBuilder;
 
     @Inject
     private Config config;
@@ -198,7 +203,7 @@ public class StockFacade {
     @Path("statisticsCsv")
     public String statisticsCsv() {
         List<StockKeyDataDto> stockKeyData = keyDataBuilder.create();
-        return keyDataCsvBuilder.asCsv(stockKeyData);
+        return keyDataStringBuilder.asCsv(stockKeyData);
     }
 
 
