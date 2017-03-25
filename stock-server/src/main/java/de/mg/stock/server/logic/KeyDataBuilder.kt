@@ -28,7 +28,7 @@ import javax.ejb.Singleton
 import javax.inject.Inject
 
 @Singleton
-class KeyDataBuilder {
+open class KeyDataBuilder {
 
     private val DAY_INTERVALS = arrayOf(3, 7, 30, 90, 180, 365, 2 * 365, 3 * 365, 4 * 365, 5 * 365, 7 * 365,
             10 * 365, 15 * 365, 20 * 365, 30 * 365)

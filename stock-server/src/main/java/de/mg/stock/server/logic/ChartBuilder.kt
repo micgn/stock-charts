@@ -29,7 +29,7 @@ import javax.ejb.Singleton
 import javax.inject.Inject
 
 @Singleton
-class ChartBuilder {
+open class ChartBuilder {
 
     @Inject
     lateinit private var dateTimeProvider: DateTimeProvider
