@@ -4,7 +4,11 @@ import de.mg.stock.server.Config;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.mail.*;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.Properties;
@@ -20,10 +24,10 @@ public class AlertMailSender {
     private Config config;
 
     public void sendStartupMail() {
-        send("alert mail sending initialized", "Initialized...");
+        send("alert mail sending initialized", "Initialized...", false);
     }
 
-    public void send(String msg, String subject) {
+    public void send(String msg, String subject, boolean html) {
 
         logger.info(subject + ": " + msg);
 
@@ -31,8 +35,6 @@ public class AlertMailSender {
             logger.warning("alert mail not initialized");
             return;
         }
-
-        logger.info("going to send mail:\n" + msg);
 
         Properties properties = new Properties();
         properties.put("mail.smtp.auth", "true");
@@ -52,7 +54,10 @@ public class AlertMailSender {
             message.setFrom(new InternetAddress(config.getGmailUser()));
             message.addRecipient(Message.RecipientType.TO, new InternetAddress(config.getAlertMailTo()));
             message.setSubject(subject);
-            message.setText(msg);
+            if (html)
+                message.setContent(msg, "text/html; charset=utf-8");
+            else
+                message.setText(msg);
             Transport.send(message);
         } catch (MessagingException e) {
             logger.log(Level.SEVERE, "mail sending problem", e);

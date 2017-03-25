@@ -59,7 +59,7 @@ public class AlertMailTask {
 
         Map<StocksEnum, Long> changePercent = alertCalculator.immediateToNofifyChanges();
         if (!changePercent.isEmpty()) {
-            alertMailSender.send(formatMsg(changePercent), "Stock Alert");
+            alertMailSender.send(formatMsg(changePercent), "Stock Alert", false);
             alertDAO.setLastAlertSent(today);
         }
     }
@@ -68,7 +68,7 @@ public class AlertMailTask {
     public void sendWeeklyMail() {
         List<StockKeyDataDto> stockKeyData = keyDataBuilder.create();
         String str = keyDataStringBuilder.asHtml(stockKeyData);
-        alertMailSender.send(str, "Weekly Stock Changes");
+        alertMailSender.send(str, "Weekly Stock Changes", true);
     }
 
     private String formatMsg(Map<StocksEnum, Long> changes) {
