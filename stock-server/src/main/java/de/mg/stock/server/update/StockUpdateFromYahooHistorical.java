@@ -50,7 +50,7 @@ public class StockUpdateFromYahooHistorical implements StockUpdaterHistorical {
 
         LocalDateTime fetchTime = dateTimeProvider.now();
 
-        String response = httpUtil.get("http://ichart.yahoo.com/table.csv?s=" + symbol);
+        String response = httpUtil.get("https://ichart.yahoo.com/table.csv?s=" + symbol);
         if (isEmpty(response)) {
             logger.warning("nothing received for " + symbol);
             return Collections.emptyList();
